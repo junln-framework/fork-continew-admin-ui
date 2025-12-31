@@ -14,8 +14,9 @@ export interface UserResp {
   createTime: string
   updateUserString: string
   updateTime: string
-  deptId: string
-  deptName: string
+  deptId: number
+  deptIds: Array<number>
+  deptNames: Array<string>
   roleIds: Array<number>
   roleNames: Array<string>
   disabled: boolean

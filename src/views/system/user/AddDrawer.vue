@@ -44,7 +44,7 @@ const [form, resetForm] = useResetReactive({
 
 const columns: ColumnItem[] = reactive([
   {
-    label: '昵称',
+    label: '姓名',
     field: 'nickname',
     type: 'input',
     span: 24,
@@ -54,7 +54,7 @@ const columns: ColumnItem[] = reactive([
     },
   },
   {
-    label: '用户名',
+    label: '账号',
     field: 'username',
     type: 'input',
     span: 24,
@@ -103,8 +103,8 @@ const columns: ColumnItem[] = reactive([
     },
   },
   {
-    label: '所属部门',
-    field: 'deptId',
+    label: '部门',
+    field: 'deptIds',
     type: 'tree-select',
     span: 24,
     required: true,
@@ -113,6 +113,10 @@ const columns: ColumnItem[] = reactive([
       allowClear: true,
       allowSearch: true,
       fallbackOption: false,
+      multiple: true,
+      placeholder: '请选择部门',
+      treeCheckable: true,
+      treeCheckStrictly: true,
       filterTreeNode(searchKey: string, nodeData: TreeNodeData) {
         if (nodeData.title) {
           return nodeData.title.toLowerCase().includes(searchKey.toLowerCase())

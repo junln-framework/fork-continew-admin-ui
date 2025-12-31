@@ -61,6 +61,7 @@
             删除
           </a-link>
           <a-link v-permission="['system:dept:create']" title="新增" @click="onAdd(record.id)">新增</a-link>
+          <a-link title="部门成员" @click="$router.push({ name: 'SystemUser', query: { deptId: record.id } })">成员</a-link>
         </a-space>
       </template>
     </GiTable>
@@ -171,7 +172,7 @@ const columns: TableInstance['columns'] = [
     title: '操作',
     dataIndex: 'action',
     slotName: 'action',
-    width: 160,
+    width: 240,
     align: 'center',
     fixed: !isMobile() ? 'right' : undefined,
     show: has.hasPermOr(['system:dept:update', 'system:dept:delete', 'system:dept:create']),

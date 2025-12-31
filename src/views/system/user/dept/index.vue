@@ -39,15 +39,24 @@
 
 <script setup lang="tsx">
 import type { TreeInstance, TreeNodeData } from '@arco-design/web-vue'
-import { ref } from 'vue'
+import { defineExpose, ref, watch } from 'vue'
 import { useDept } from '@/hooks/app'
 
 const emit = defineEmits<{
   (e: 'node-click', keys: Array<any>): void
 }>()
 
-// 选中节点
-const selectedKeys = ref()
+// 选中节点 - 改为响应式，允许外部修改
+const selectedKeys = ref<string[]>([])
+const treeRef = ref<TreeInstance>()
+
+// 暴露 selectedKeys 给父组件
+defineExpose({
+  selectedKeys,
+  expandAll: (expand: boolean) => {
+    treeRef.value?.expandAll(expand)
+  },
+})
 const select = (keys: Array<any>) => {
   if (selectedKeys.value && selectedKeys.value[0] === keys[0]) {
     return
@@ -56,16 +65,23 @@ const select = (keys: Array<any>) => {
   emit('node-click', keys)
 }
 
-const treeRef = ref<TreeInstance>()
 // 查询树列表
 const { deptList, getDeptList } = useDept({
   onSuccess: () => {
     nextTick(() => {
       treeRef.value?.expandAll(true)
-      select([deptList.value[0]?.key])
+      // 只有在没有外部传入选中节点时才默认选中第一个
+      if (selectedKeys.value.length === 0) {
+        select([deptList.value[0]?.key])
+      }
     })
   },
 })
+
+// 监听 selectedKeys 变化，确保树组件同步
+watch(selectedKeys, () => {
+  // 这里可以添加额外的逻辑，比如滚动到选中节点
+}, { deep: true })
 
 // 过滤树
 const searchKey = ref('')

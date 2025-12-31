@@ -17,8 +17,8 @@
       </a-descriptions-item>
       <a-descriptions-item label="手机号">{{ dataDetail?.phone || '暂无' }}</a-descriptions-item>
       <a-descriptions-item label="邮箱">{{ dataDetail?.email || '暂无' }}</a-descriptions-item>
-      <a-descriptions-item label="所属部门">{{ dataDetail?.deptName }}</a-descriptions-item>
-      <a-descriptions-item label="角色"><GiCellTags :data="dataDetail?.roleNames" /></a-descriptions-item>
+      <a-descriptions-item label="部门" :span="2"><GiCellTags :data="dataDetail?.deptNames" /></a-descriptions-item>
+      <a-descriptions-item label="角色" :span="2"><GiCellTags :data="dataDetail?.roleNames" /></a-descriptions-item>
       <a-descriptions-item label="创建人">{{ dataDetail?.createUserString }}</a-descriptions-item>
       <a-descriptions-item label="创建时间">{{ dataDetail?.createTime }}</a-descriptions-item>
       <a-descriptions-item label="修改人">{{ dataDetail?.updateUserString }}</a-descriptions-item>

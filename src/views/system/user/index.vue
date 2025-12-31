@@ -1,7 +1,7 @@
 <template>
   <GiPageLayout>
     <template #left>
-      <DeptTree @node-click="handleSelectDept" />
+      <DeptTree ref="deptTreeRef" @node-click="handleSelectDept" />
     </template>
     <GiTable
       row-key="id"
@@ -41,6 +41,9 @@
       </template>
       <template #roleNames="{ record }">
         <GiCellTags :data="record.roleNames" />
+      </template>
+      <template #deptNames="{ record }">
+        <GiCellTags :data="record.deptNames" />
       </template>
       <template #status="{ record }">
         <GiCellStatus :status="record.status" />
@@ -88,6 +91,8 @@
 
 <script setup lang="ts">
 import type { TableInstance } from '@arco-design/web-vue'
+import { onMounted, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import DeptTree from './dept/index.vue'
 import AddDrawer from './AddDrawer.vue'
 import ImportDrawer from './ImportDrawer.vue'
@@ -103,17 +108,21 @@ import type { ColumnItem } from '@/components/GiForm'
 
 defineOptions({ name: 'SystemUser' })
 
+const route = useRoute()
+const deptTreeRef = ref() // 部门树组件引用
+
 const [queryForm, resetForm] = useResetReactive({
   sort: ['t1.id,desc'],
+  deptId: route.query.deptId as string || undefined, // 初始化时设置 deptId
 })
 const queryFormColumns: ColumnItem[] = reactive([
   {
     type: 'input',
-    label: '用户名',
+    label: '姓名',
     field: 'description',
     span: { xs: 24, sm: 8, xxl: 8 },
     props: {
-      placeholder: '用户名/昵称/描述',
+      placeholder: '账号/姓名/描述',
     },
   },
   {
@@ -150,7 +159,7 @@ const columns: TableInstance['columns'] = [
     fixed: !isMobile() ? 'left' : undefined,
   },
   {
-    title: '昵称',
+    title: '姓名',
     dataIndex: 'nickname',
     slotName: 'nickname',
     minWidth: 140,
@@ -158,10 +167,10 @@ const columns: TableInstance['columns'] = [
     tooltip: true,
     fixed: !isMobile() ? 'left' : undefined,
   },
-  { title: '用户名', dataIndex: 'username', slotName: 'username', minWidth: 140, ellipsis: true, tooltip: true },
+  { title: '账号', dataIndex: 'username', slotName: 'username', minWidth: 140, ellipsis: true, tooltip: true },
   { title: '状态', dataIndex: 'status', slotName: 'status', align: 'center' },
   { title: '性别', dataIndex: 'gender', slotName: 'gender', align: 'center' },
-  { title: '所属部门', dataIndex: 'deptName', minWidth: 180, ellipsis: true, tooltip: true },
+  { title: '部门', dataIndex: 'deptNames', slotName: 'deptNames', minWidth: 210 },
   { title: '角色', dataIndex: 'roleNames', slotName: 'roleNames', minWidth: 165 },
   { title: '手机号', dataIndex: 'phone', minWidth: 170, ellipsis: true, tooltip: true },
   { title: '邮箱', dataIndex: 'email', minWidth: 170, ellipsis: true, tooltip: true },
@@ -207,12 +216,6 @@ const onExport = () => {
   useDownload(() => exportUser(queryForm))
 }
 
-// 根据选中部门查询
-const handleSelectDept = (keys: Array<any>) => {
-  queryForm.deptId = keys.length === 1 ? keys[0] : undefined
-  search()
-}
-
 const ImportDrawerRef = ref<InstanceType<typeof ImportDrawer>>()
 // 导入
 const onImport = () => {
@@ -246,6 +249,53 @@ const RoleUpdateModalRef = ref<InstanceType<typeof RoleUpdateModal>>()
 // 分配角色
 const onUpdateRole = (record: UserResp) => {
   RoleUpdateModalRef.value?.onOpen(record.id)
+}
+// 选中部门树节点的方法
+const selectDeptTreeNode = (deptId: string) => {
+  if (deptTreeRef.value) {
+    // 通过 ref 直接设置 selectedKeys
+    deptTreeRef.value.selectedKeys = [deptId]
+
+    // 如果需要展开父节点，可以调用 expandAll
+    deptTreeRef.value.expandAll?.(true)
+
+    // 触发节点点击事件，确保其他逻辑正常执行
+    deptTreeRef.value.select?.([deptId])
+  }
+}
+onMounted(() => {
+  const deptIdFromRoute = route.query.deptId as string
+  if (deptIdFromRoute) {
+    // 延迟执行，确保部门树已加载完成
+    nextTick(() => {
+      // 设置查询表单中的部门ID
+      queryForm.deptId = deptIdFromRoute
+
+      // 尝试选中部门树节点
+      selectDeptTreeNode(deptIdFromRoute)
+
+      // 执行搜索
+      search()
+    })
+  }
+})
+// 监听路由参数变化
+watch(
+  () => route.query.deptId,
+  (newDeptId) => {
+    if (newDeptId) {
+      queryForm.deptId = newDeptId as string
+      selectDeptTreeNode(newDeptId as string)
+      search()
+    }
+  },
+)
+
+// 根据选中部门查询
+const handleSelectDept = (keys: Array<any>) => {
+  const deptId = keys.length === 1 ? keys[0] : undefined
+  queryForm.deptId = deptId
+  search()
 }
 </script>
 

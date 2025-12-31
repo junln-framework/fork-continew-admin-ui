@@ -1,5 +1,7 @@
 <template>
   <a-carousel
+    v-if="dataList.length > 0"
+    :loading="loading"
     indicator-type="slider"
     show-arrow="hover"
     auto-play
@@ -29,16 +31,16 @@ export interface DataItem {
 }
 
 const images = ref<DataItem[]>([
-  {
-    name: '公众号',
-    img: `https://continew.top/images/sponsor/ads/cn-qrcode.jpg?${new Date().getTime()}`,
-    url: 'https://continew.top/discussion.html',
-  },
-  {
-    name: '赞助',
-    img: `https://continew.top/images/sponsor/ads/cn-sponsor.jpg?${new Date().getTime()}`,
-    url: 'https://continew.top/sponsor/',
-  },
+  // {
+  //   name: '公众号',
+  //   img: `https://continew.top/images/sponsor/ads/cn-qrcode.jpg?${new Date().getTime()}`,
+  //   url: 'https://continew.top/discussion.html',
+  // },
+  // {
+  //   name: '赞助',
+  //   img: `https://continew.top/images/sponsor/ads/cn-sponsor.jpg?${new Date().getTime()}`,
+  //   url: 'https://continew.top/sponsor/',
+  // },
 ])
 
 const dataList = ref<DataItem[]>([])
@@ -47,25 +49,25 @@ const loading = ref(false)
 const getDataList = async () => {
   try {
     loading.value = true
-    const base = `https://continew.top`
-    const data = await (await fetch(`${base}/sponsor.json?${new Date().getTime()}`)).json()
-    if (data) {
-      // 只获取 special 和 platinum 赞助者
-      const sponsors = [...data.special, ...data.platinum]
-      sponsors.forEach((item) => {
-        if (!item.name) {
-          return
-        }
-        dataList.value.push({
-          name: item.name,
-          img: isHttp(item.img) ? item.img : `${base}/images/sponsor/ads/${item.img}`,
-          url: item.url,
-        })
-      })
-      dataList.value = [...dataList.value, ...images.value]
-    } else {
-      dataList.value = images.value
-    }
+    // const base = `https://continew.top`
+    // const data = await (await fetch(`${base}/sponsor.json?${new Date().getTime()}`)).json()
+    // if (data) {
+    //   // 只获取 special 和 platinum 赞助者
+    //   const sponsors = [...data.special, ...data.platinum]
+    //   sponsors.forEach((item) => {
+    //     if (!item.name) {
+    //       return
+    //     }
+    //     dataList.value.push({
+    //       name: item.name,
+    //       img: isHttp(item.img) ? item.img : `${base}/images/sponsor/ads/${item.img}`,
+    //       url: item.url,
+    //     })
+    //   })
+    //   dataList.value = [...dataList.value, ...images.value]
+    // } else {
+    //   dataList.value = images.value
+    // }
   } catch (err) {
     // console.log(err)
   } finally {
