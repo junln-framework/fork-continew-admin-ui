@@ -1,5 +1,5 @@
 <template>
-  <a-config-provider update-at-scroll>
+  <a-config-provider update-at-scroll :size="globalSize">
     <template #loading>
       <img src="/static/images/loading.svg" class="loading-icon" alt="loading" />
     </template>
@@ -20,6 +20,8 @@
 import { useAppStore, useUserStore } from '@/stores'
 
 defineOptions({ name: 'App' })
+// 全局尺寸：可选值 mini / small / medium / large
+const globalSize = ref('small')
 const userStore = useUserStore()
 const appStore = useAppStore()
 appStore.initTheme()

@@ -43,6 +43,8 @@ export function useTable<T extends U, U = T>(api: Api<T>, options?: Options<T, U
   const select: TableInstance['onSelect'] = (rowKeys) => {
     if (Array.isArray(rowKey)) {
       selectedKeys.value = rowKeys
+    } else {
+      selectedKeys.value = rowKeys as (string | number)[]
     }
   }
 
@@ -51,6 +53,12 @@ export function useTable<T extends U, U = T>(api: Api<T>, options?: Options<T, U
     const key = rowKey ?? 'id'
     const arr = (tableData.value as TableData[]).filter((i) => !(i?.disabled ?? false))
     selectedKeys.value = checked ? arr.map((i) => i[key as string]) : []
+  }
+
+  /** 获取选中的数据 */
+  const getSelectedData = () => {
+    const key = rowKey ?? 'id'
+    return tableData.value.filter((i) => selectedKeys.value.includes(i[key as string]))
   }
 
   // 查询
@@ -124,6 +132,8 @@ export function useTable<T extends U, U = T>(api: Api<T>, options?: Options<T, U
     select,
     /** 全选行 */
     selectAll,
+    /** 获取选择的数据  */
+    getSelectedData,
     /** 处理删除、批量删除 */
     handleDelete,
     /** 刷新表格数据，页码会缓存 */

@@ -213,6 +213,7 @@ const onUpdate = async (id: string) => {
     await getRoleList()
   }
   const { data } = await getUser(id)
+  // data.deptIds.map((id) => String(id))
   Object.assign(form, data)
   visible.value = true
 }

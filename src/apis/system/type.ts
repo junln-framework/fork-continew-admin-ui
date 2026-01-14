@@ -145,6 +145,54 @@ export interface DeptQuery {
   status?: number
 }
 
+export interface AreaLevelCodes {
+  countryCode: string // 国家/省级编码
+  provinceCode: string // 省/直辖市级编码
+  cityCode: string // 市级编码
+  districtCode: string // 区县级编码
+}
+
+/** 区域类型 */
+export interface AreaResp {
+  id: string
+  areaCode: string
+  areaName: string
+  shortName: string
+  parentCode: string
+  level: number
+  fullNamePath: string
+  fullCodePath: string
+  isActive: number
+  zipCode: string
+  createTime: string
+  children: AreaResp[]
+}
+export interface AreaQuery {
+  parentCode: string
+  level?: number
+}
+
+export interface AreaNode {
+  code: string // 区域编码（唯一标识）
+  name: string // 区域名称
+  level: 0 | 1 | 2 | 3 // 层级：0-国家，1-省，2-市，3-区
+  parentCode?: string // 父级编码
+  children?: AreaNode[] // 子节点
+  isLeaf?: boolean // 是否为叶子节点（区级）
+}
+
+export interface AreaFormData {
+  countryCode: string // 国家编码
+  provinceCode: string // 省份编码
+  cityCode: string // 城市编码
+  districtCode: string // 区县编码
+
+  countryName: string // 国家名称
+  provinceName: string // 省份名称
+  cityName: string // 城市名称
+  districtName: string // 区县名称
+}
+
 /** 字典类型 */
 export interface DictResp {
   id: string
