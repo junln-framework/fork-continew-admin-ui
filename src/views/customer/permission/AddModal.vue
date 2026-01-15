@@ -5,10 +5,7 @@
     :title="`权限分配:${selectedUserName}`"
     :width="width > 768 ? '85%' : '95%'"
     unmount-on-close
-    ok-text="保存权限"
-    cancel-text="关闭"
     :body-style="{ maxHeight: '80vh', overflow: 'auto', padding: '16px' }"
-    @ok="save"
   >
     <a-space direction="vertical" :size="16" style="display: block;">
       <a-row class="grid">
