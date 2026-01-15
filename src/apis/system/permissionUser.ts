@@ -49,7 +49,8 @@ export interface PermissionReq {
 export interface UserPermissionDataResp {
   permissionType: string
   info: string
-  id: string | number | undefined
+  id?: string | number | undefined
+  code: string | undefined
   fullNamePath?: string | undefined
   type: string
   level?: number

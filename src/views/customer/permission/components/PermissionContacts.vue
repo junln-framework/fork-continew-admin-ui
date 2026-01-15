@@ -95,6 +95,9 @@ const updateSelectedKeys = () => {
   if (contactCodes.length === 0) {
     selectedKeys.value = []
     selectedData.value.clear()
+    if (!isInitializing.value) {
+      emit('select-contact-code', { key: [], contactList: [] })
+    }
     return
   }
 
@@ -118,7 +121,7 @@ const updateSelectedKeys = () => {
     matchedRecords.forEach((record) => {
       selectedData.value.set(record.id, record)
     })
-    // 重置标志位
+    // 使用setTimeout确保在下一个事件循环中重置
     nextTick(() => {
       isInitializing.value = false
     })

@@ -49,11 +49,7 @@
 
               <!-- 权限预览 -->
               <a-tab-pane key="preview" title="权限预览">
-                <PermissionPreview
-                  :area-permissions="areaPermissions"
-                  :company-permissions="companyPermissions"
-                  :contact-permissions="contactPermissions"
-                />
+                <PermissionPreview />
               </a-tab-pane>
             </a-tabs>
           </div>
@@ -85,14 +81,40 @@
         </a-col>
       </a-row>
     </a-space>
+    <!-- 保存按钮使用 a-popconfirm -->
+    <template #footer>
+      <a-space>
+        <a-button @click="visible = false">取消</a-button>
+        <!-- 使用 a-popconfirm 包裹保存按钮 -->
+        <a-popconfirm
+          v-if="!hasAnyPermission"
+          content="当前没有任何权限，确定要清空所有权限吗？"
+          position="tr"
+          type="warning"
+          ok-text="清空" cancel-text="关闭"
+          @ok="handleSave"
+          @cancel="handleCancelConfirm"
+        >
+          <a-button type="primary">保存权限</a-button>
+        </a-popconfirm>
+
+        <!-- 有权限时直接保存 -->
+        <a-button
+          v-else
+          type="primary"
+          @click="handleSave"
+        >
+          保存权限
+        </a-button>
+      </a-space>
+    </template>
   </a-modal>
 </template>
 
 <script setup lang="ts">
-import { Message, type TableInstance } from '@arco-design/web-vue'
+import { Message, Modal, type TableInstance } from '@arco-design/web-vue'
 import { useWindowSize } from '@vueuse/core'
 import { reactive, ref } from 'vue'
-
 import type { TreeNodeData } from '@arco-design/web-vue/es/tree/interface'
 // 导入组件
 import PermissionArea from './components/PermissionArea.vue'
@@ -108,6 +130,7 @@ const { width } = useWindowSize()
 interface AreaTreeNodeData extends TreeNodeData {
   level?: number // 区域层级
   fullNamePath?: string // 完整路径
+  id?: number | string // 区域ID
 }
 
 const permissionReq: PermissionReq = {
@@ -117,10 +140,6 @@ const permissionReq: PermissionReq = {
   contacts: '',
 }
 const selectedUserName = ref<string>('')
-// 权限数据
-const areaPermissions = ref([])
-const companyPermissions = ref([])
-const contactPermissions = ref([])
 
 const permissionAreaRef = ref()
 const permissionCompanyRef = ref()
@@ -170,7 +189,8 @@ const findNodeByKey = (treeData: AreaTreeNodeData[], searchKeys) => {
         results.push({
           permissionType,
           info: node.fullNamePath as string,
-          id: node.key,
+          id: node.key as string,
+          code: node.key as string,
           type: 'area',
           level: node.level,
         })
@@ -239,21 +259,24 @@ const handlePermissionChange = (type, selected) => {
 // 移除方法
 const handleRemoveItem = (record: UserPermissionDataResp) => {
   // 1. 从表格中移除数据
-  selectDataList.value = selectDataList.value.filter((item) => item.id !== record.id)
+
   // 2. 更新树形组件的选中状态
   if (record.type === 'area' && record.id && permissionAreaRef.value) {
-    permissionAreaRef.value.removeItemByKey(record.id)
+    selectDataList.value = selectDataList.value.filter((item) => item.id !== record.code)
+    permissionAreaRef.value.removeItemByKey(record.code)
     if (permissionChanges?.area) {
-      permissionChanges.area = [...permissionChanges.area.filter((key) => key !== record.id)]
+      permissionChanges.area = [...permissionChanges.area.filter((key) => key !== record.code)]
     }
   }
   if (record.type === 'company' && record.id) {
+    selectDataList.value = selectDataList.value.filter((item) => item.id !== record.id)
     permissionCompanyRef.value.removeItemByKey(record.id)
     if (permissionChanges?.company) {
       permissionChanges.company = [...permissionChanges.company.filter((key) => key !== record.id)]
     }
   }
   if (record.type === 'contacts' && record.id) {
+    selectDataList.value = selectDataList.value.filter((item) => item.id !== record.id)
     permissionContactsRef.value.removeItemByKey(record.id)
     if (permissionChanges?.contacts) {
       permissionChanges.contacts = [...permissionChanges.contacts.filter((key) => key !== record.id)]
@@ -273,42 +296,82 @@ const loadUserPermissions = async () => {
     Message.error('加载用户权限失败')
   })
 }
-// 保存所有权限
-const save = async () => {
-  if (!permissionReq.userId) {
-    Message.warning('请先选择用户')
-    return
-  }
-  const areas = permissionChanges.area.length > 0 ? permissionChanges.area.join(',') : ''
-  const companies = permissionChanges.company.length > 0 ? permissionChanges.company.join(',') : ''
-  const contacts = permissionChanges.contacts.length > 0 ? permissionChanges.contacts.join(',') : ''
+const handleSave = async () => {
+  // 构建权限字符串
+  const areas = selectDataList.value
+    .filter((item) => item.type === 'area')
+    .map((item) => item.id)
+    .join(',')
 
-  if (permissionChanges.area.length === 0 && permissionChanges.company.length === 0 && permissionChanges.contacts.length === 0) {
-    Message.warning('没有权限变更需要保存')
-    return
+  const companies = selectDataList.value
+    .filter((item) => item.type === 'company')
+    .map((item) => item.code || item.id)
+    .join(',')
+
+  const contacts = selectDataList.value
+    .filter((item) => item.type === 'contacts')
+    .map((item) => item.code || item.id)
+    .join(',')
+
+  const saveReq = {
+    userId: permissionReq.userId,
+    areas,
+    companies,
+    contacts,
   }
-  permissionReq.areas = areas
-  permissionReq.companies = companies
-  permissionReq.contacts = contacts
 
   try {
-    console.error('保存权限:', permissionReq)
-    await saveUserPermissions(permissionReq)
+    await saveUserPermissions(saveReq)
     Message.success('保存成功')
+
+    // 更新permissionReq
+    permissionReq.areas = areas
+    permissionReq.companies = companies
+    permissionReq.contacts = contacts
+
+    // 清空变更记录
+    Object.keys(permissionChanges).forEach((key) => {
+      permissionChanges[key] = []
+    })
+
+    // 关闭弹框
+    visible.value = false
   } catch (error) {
     console.error('保存权限失败:', error)
     Message.error('保存权限失败')
   }
 }
 
+const handleCancelConfirm = () => {
+  console.warn('用户取消了保存操作')
+}
+const hasAnyPermission = computed(() => {
+  const areas = selectDataList.value
+    .filter((item) => item.type === 'area')
+    .map((item) => item.id)
+    .join(',')
+
+  const companies = selectDataList.value
+    .filter((item) => item.type === 'company')
+    .map((item) => item.code || item.id)
+    .join(',')
+
+  const contacts = selectDataList.value
+    .filter((item) => item.type === 'contacts')
+    .map((item) => item.code || item.id)
+    .join(',')
+
+  return !!(areas || companies || contacts)
+})
+
 // 重置权限
 const resetPermissions = () => {
   if (permissionReq.userId) {
     loadUserPermissions()
   } else {
-    areaPermissions.value = []
-    companyPermissions.value = []
-    contactPermissions.value = []
+    permissionReq.areas = ''
+    permissionReq.companies = ''
+    permissionReq.contacts = ''
     Object.keys(permissionChanges).forEach((key) => {
       permissionChanges[key] = []
     })
