@@ -24,7 +24,7 @@
               <a-tab-pane key="area" title="区域权限">
                 <PermissionArea
                   ref="permissionAreaRef"
-                  :user-id="selectedUserId"
+                  :area-code="permissionReq.areas"
                   @select-area-code="handlePermissionChange('area', $event)"
                 />
               </a-tab-pane>
@@ -33,8 +33,7 @@
               <a-tab-pane key="company" title="单位权限">
                 <PermissionCompany
                   ref="permissionCompanyRef"
-                  :user-id="selectedUserId"
-                  :initial-data="companyPermissions"
+                  :company-code="permissionReq.companies"
                   @select-company-code="handlePermissionChange('company', $event)"
                 />
               </a-tab-pane>
@@ -43,8 +42,7 @@
               <a-tab-pane key="contacts" title="联系人权限">
                 <PermissionContacts
                   ref="permissionContactsRef"
-                  :user-id="selectedUserId"
-                  :initial-data="contactPermissions"
+                  :contact-code="permissionReq.contacts"
                   @select-contact-code="handlePermissionChange('contacts', $event)"
                 />
               </a-tab-pane>
@@ -101,26 +99,23 @@ import PermissionArea from './components/PermissionArea.vue'
 import PermissionCompany from './components/PermissionCompany.vue'
 import PermissionContacts from './components/PermissionContacts.vue'
 import PermissionPreview from './components/PermissionPreview.vue'
-import { saveUserPermissions } from '@/apis/system/permissionUser'
+import { type PermissionReq, type UserPermissionDataResp, getPermissionUserReq, getUserPermissionsSelected, saveUserPermissions } from '@/apis/system/permissionUser'
 
 const activeTab = ref('area')
 const visible = ref(false)
 const { width } = useWindowSize()
-
-interface SelectData {
-  permissionType: string
-  info: string
-  id: string | number | undefined
-  type: string
-  level?: number
-}
 
 interface AreaTreeNodeData extends TreeNodeData {
   level?: number // 区域层级
   fullNamePath?: string // 完整路径
 }
 
-const selectedUserId = ref<string | null>(null)
+const permissionReq: PermissionReq = {
+  userId: undefined,
+  areas: '',
+  companies: '',
+  contacts: '',
+}
 const selectedUserName = ref<string>('')
 // 权限数据
 const areaPermissions = ref([])
@@ -130,7 +125,7 @@ const contactPermissions = ref([])
 const permissionAreaRef = ref()
 const permissionCompanyRef = ref()
 const permissionContactsRef = ref()
-const selectDataList = ref<SelectData[]>([])
+const selectDataList = ref<UserPermissionDataResp[]>([])
 
 // 权限变更记录
 const permissionChanges = reactive({
@@ -140,6 +135,12 @@ const permissionChanges = reactive({
 })
 
 const selectColumns: TableInstance['columns'] = [
+  {
+    title: '#',
+    width: 50,
+    align: 'center',
+    render: ({ rowIndex }) => h('span', {}, rowIndex + 1),
+  },
   { title: '权限类型', dataIndex: 'permissionType', slotName: 'permissionType', align: 'center', minWidth: 80, ellipsis: true, tooltip: true, width: 110 },
   { title: '区域/单位/联系人', dataIndex: 'info', ellipsis: true, tooltip: true },
   {
@@ -153,10 +154,10 @@ const selectColumns: TableInstance['columns'] = [
 
 // 处理标签页切换
 const handleTabChange = (key) => {
-  console.log('切换到标签页:', key)
+  console.warn('切换到标签页:', key)
 }
 const findNodeByKey = (treeData: AreaTreeNodeData[], searchKeys) => {
-  const results: SelectData[] = []
+  const results: UserPermissionDataResp[] = []
   const searchRecursive = (nodes: AreaTreeNodeData[]) => {
     for (const node of nodes) {
       // 如果当前节点的key在searchKeys数组中
@@ -233,10 +234,10 @@ const handlePermissionChange = (type, selected) => {
     }
   }
   selectDataList.value = [...selectDataList.value]
-  console.log(`${type}权限变更:`, selected)
+  console.warn(`${type}权限变更:`, selected)
 }
 // 移除方法
-const handleRemoveItem = (record: SelectData) => {
+const handleRemoveItem = (record: UserPermissionDataResp) => {
   // 1. 从表格中移除数据
   selectDataList.value = selectDataList.value.filter((item) => item.id !== record.id)
   // 2. 更新树形组件的选中状态
@@ -261,39 +262,23 @@ const handleRemoveItem = (record: SelectData) => {
 }
 // 加载用户权限
 const loadUserPermissions = async () => {
-  if (!selectedUserId.value) return
-
-  try {
-    // 模拟加载权限数据
-    areaPermissions.value = [
-      // { id: 'area-1', name: '华东区域', code: 'EAST', selected: true },
-      // { id: 'area-2', name: '华南区域', code: 'SOUTH', selected: false },
-      // { id: 'area-3', name: '华北区域', code: 'NORTH', selected: true },
-    ]
-
-    companyPermissions.value = [
-      // { id: 'company-1', name: '单位1', code: 'COMP001', selected: true },
-      // { id: 'company-2', name: '单位2', code: 'COMP002', selected: false },
-    ]
-
-    contactPermissions.value = [
-      // { id: 'contact-1', name: '联系人1', code: 'CONT001', selected: true },
-      // { id: 'contact-2', name: '联系人2', code: 'CONT002', selected: false },
-    ]
-
-    Message.success('权限加载成功')
-  } catch (error) {
-    console.error('加载权限失败:', error)
-    Message.error('加载权限失败')
-  }
+  if (!permissionReq.userId) return
+  getUserPermissionsSelected(permissionReq.userId).then((res) => {
+    if (res.success) {
+      selectDataList.value = res.data
+      selectDataList.value = [...selectDataList.value]
+    }
+  }).catch((error) => {
+    console.error('加载用户权限失败:', error)
+    Message.error('加载用户权限失败')
+  })
 }
 // 保存所有权限
 const save = async () => {
-  if (!selectedUserId.value) {
+  if (!permissionReq.userId) {
     Message.warning('请先选择用户')
     return
   }
-  debugger
   const areas = permissionChanges.area.length > 0 ? permissionChanges.area.join(',') : ''
   const companies = permissionChanges.company.length > 0 ? permissionChanges.company.join(',') : ''
   const contacts = permissionChanges.contacts.length > 0 ? permissionChanges.contacts.join(',') : ''
@@ -302,20 +287,13 @@ const save = async () => {
     Message.warning('没有权限变更需要保存')
     return
   }
+  permissionReq.areas = areas
+  permissionReq.companies = companies
+  permissionReq.contacts = contacts
 
   try {
-    console.error('保存权限:', {
-      userId: selectedUserId.value,
-      areas,
-      companies,
-      contacts,
-    })
-    await saveUserPermissions({
-      userId: selectedUserId.value,
-      areas,
-      companies,
-      contacts,
-    })
+    console.error('保存权限:', permissionReq)
+    await saveUserPermissions(permissionReq)
     Message.success('保存成功')
   } catch (error) {
     console.error('保存权限失败:', error)
@@ -325,7 +303,7 @@ const save = async () => {
 
 // 重置权限
 const resetPermissions = () => {
-  if (selectedUserId.value) {
+  if (permissionReq.userId) {
     loadUserPermissions()
   } else {
     areaPermissions.value = []
@@ -339,15 +317,22 @@ const resetPermissions = () => {
 }
 
 // 新增
-const onAdd = (userId: string, nickname: string) => {
-  selectedUserId.value = userId
-  selectedUserName.value = nickname
-  const message = selectedUserId.value || 'no userId'
-  Message.success(message)
-  visible.value = true
+const onInitData = (userId: string, info: string) => {
+  permissionReq.userId = userId
+  getPermissionUserReq(userId).then((res) => {
+    visible.value = true
+    permissionReq.areas = res.data.areas
+    permissionReq.companies = res.data.companies
+    permissionReq.contacts = res.data.contacts
+    loadUserPermissions()
+  }).catch((error) => {
+    console.error('获取用户权限失败:', error)
+    Message.error('获取用户权限失败')
+  })
+  selectedUserName.value = info
 }
 
-defineExpose({ onAdd })
+defineExpose({ onInitData })
 </script>
 
 <style scoped>

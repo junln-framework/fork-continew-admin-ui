@@ -56,15 +56,15 @@
 
 <script setup lang="ts">
 import type { TableInstance } from '@arco-design/web-vue'
-import { onMounted, reactive, ref, watch } from 'vue'
+import { reactive, ref, watch } from 'vue'
 import { Message } from '@arco-design/web-vue'
 import { useTable } from '@/hooks'
-import { type CompanyQuery, type CompanyResp, deleteCompany, exportCompany, listCompany } from '@/apis/customer/company'
+import { type CompanyQuery, type CompanyResp, listCompany } from '@/apis/customer/company'
 import { useDict } from '@/hooks/app'
 
 const props = defineProps({
-  userId: {
-    type: Number,
+  companyCode: {
+    type: String,
     default: null,
   },
 })
@@ -80,6 +80,17 @@ const queryForm = reactive<CompanyQuery>({
   createUser: undefined,
   sort: ['id,desc'],
 })
+// 添加标志位
+const isInitializing = ref(false)
+// 解析 companyCode 字符串
+const parseCompanyCodes = () => {
+  if (!props.companyCode) {
+    return []
+  }
+  return props.companyCode.split(',')
+    .map((code) => code.trim())
+    .filter((code) => code && code !== '')
+}
 
 const {
   tableData: companyList,
@@ -95,16 +106,66 @@ const cooperationOptions = [
 ]
 const selectedKeys = ref<string[]>([])
 const selectedData = ref<Map<string, CompanyResp>>(new Map())
-
 const emitSelectCompany = () => {
+  if (isInitializing.value) return
   const companyCodes = Array.from(selectedData.value.values())
     .map((company) => company.companyCode)
     .filter((code) => code)
   emit('select-company-code', { key: companyCodes, companyTreeData: companyList.value })
 }
+// 更新选中状态
+const updateSelectedKeys = () => {
+  const companyCodes = parseCompanyCodes()
+
+  if (companyCodes.length === 0) {
+    selectedKeys.value = []
+    selectedData.value.clear()
+    return
+  }
+
+  // 如果数据已经加载，设置选中
+  if (companyList.value.length > 0) {
+    // 查找匹配的companyCode对应的记录
+    const matchedRecords: CompanyResp[] = []
+    const matchedIds: string[] = []
+
+    companyList.value.forEach((company) => {
+      if (company.companyCode && companyCodes.includes(company.companyCode)) {
+        matchedRecords.push(company)
+        matchedIds.push(company.id)
+      }
+    })
+    // 设置初始化标志
+    isInitializing.value = true
+    selectedKeys.value = matchedIds
+    selectedData.value.clear()
+    matchedRecords.forEach((record) => {
+      selectedData.value.set(record.id, record)
+    })
+    // 重置标志位
+    nextTick(() => {
+      isInitializing.value = false
+    })
+  }
+}
+// 监听 companyCode 变化
+watch(() => props.companyCode, (newVal, oldVal) => {
+  if (newVal !== oldVal) {
+    // 延迟执行，确保DOM已更新
+    nextTick(() => {
+      updateSelectedKeys()
+    })
+  }
+})
 
 // 表格列配置
 const columns: TableInstance['columns'] = [
+  {
+    title: '#',
+    width: 50,
+    align: 'center',
+    render: ({ rowIndex }) => h('span', {}, rowIndex + 1 + (pagination.current - 1) * pagination.pageSize),
+  },
   {
     title: '区域',
     dataIndex: 'fullNamePath',
@@ -166,11 +227,15 @@ const onClearSelected = () => {
 const removeItemByKey = (key) => {
   selectedKeys.value = selectedKeys.value.filter((k) => k !== key)
 }
-// 初始化加载
+// 数据加载完成后更新选中状态
 onMounted(() => {
-  search()
+  // 监听数据加载完成
+  watch(() => companyList.value, () => {
+    if (companyList.value.length > 0) {
+      updateSelectedKeys()
+    }
+  }, { immediate: true })
 })
-
 defineExpose({ onClearSelected, removeItemByKey })
 </script>
 

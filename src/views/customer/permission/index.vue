@@ -129,7 +129,7 @@ onMounted(() => {
 const AddModalRef = ref<InstanceType<typeof AddModal>>()
 // 新增
 const assignDataRight = (record: UserResp) => {
-  AddModalRef.value?.onAdd(record.id, `${record.deptNames} ${record.nickname}`)
+  AddModalRef.value?.onInitData(record.id, `${record.deptNames} ${record.nickname}`)
 }
 // const handleAdd = (record: AreaResp) => {
 //   onAdd(record.id)

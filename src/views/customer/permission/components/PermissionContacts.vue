@@ -40,14 +40,14 @@
 
 <script setup lang="ts">
 import type { TableInstance } from '@arco-design/web-vue'
-import { onMounted, reactive, ref, watch } from 'vue'
+import { reactive, ref } from 'vue'
 import { Message } from '@arco-design/web-vue'
 import { useTable } from '@/hooks'
 import { type ContactQuery, type ContactResp, listContact } from '@/apis/customer/contact'
 
 const props = defineProps({
-  userId: {
-    type: Number,
+  contactCode: {
+    type: String,
     default: null,
   },
 })
@@ -60,7 +60,19 @@ const queryForm = reactive<ContactQuery>({
   status: undefined,
   sort: ['id,desc'],
 })
+// 添加标志位
+const isInitializing = ref(false)
+// 解析 contactCode 字符串
+const parseContactCodes = () => {
+  if (!props.contactCode) {
+    return []
+  }
 
+  // 去除空格，按逗号分割，过滤空值
+  return props.contactCode.split(',')
+    .map((code) => code.trim())
+    .filter((code) => code && code !== '')
+}
 const {
   tableData: contactList,
   loading,
@@ -71,14 +83,65 @@ const selectedKeys = ref<string[]>([])
 const selectedData = ref<Map<string, ContactResp>>(new Map())
 
 const emitSelectContact = () => {
+  if (isInitializing.value) return
   const contactCodes = Array.from(selectedData.value.values())
     .map((contact) => contact.contactCode)
     .filter((code) => code)
   emit('select-contact-code', { key: contactCodes, contactList: contactList.value })
 }
+// 更新选中状态
+const updateSelectedKeys = () => {
+  const contactCodes = parseContactCodes()
+  if (contactCodes.length === 0) {
+    selectedKeys.value = []
+    selectedData.value.clear()
+    return
+  }
+
+  // 如果数据已经加载，设置选中
+  if (contactList.value.length > 0) {
+    // 查找匹配的contactCode对应的记录
+    const matchedRecords: ContactResp[] = []
+    const matchedIds: string[] = []
+
+    contactList.value.forEach((contact) => {
+      if (contact.contactCode && contactCodes.includes(contact.contactCode)) {
+        matchedRecords.push(contact)
+        matchedIds.push(contact.id)
+      }
+    })
+    // 设置初始化标志
+    isInitializing.value = true
+    // 更新选中状态
+    selectedKeys.value = matchedIds
+    selectedData.value.clear()
+    matchedRecords.forEach((record) => {
+      selectedData.value.set(record.id, record)
+    })
+    // 重置标志位
+    nextTick(() => {
+      isInitializing.value = false
+    })
+  }
+}
+
+watch(() => props.contactCode, (newVal, oldVal) => {
+  if (newVal !== oldVal) {
+    // 延迟执行，确保DOM已更新
+    nextTick(() => {
+      updateSelectedKeys()
+    })
+  }
+})
 
 // 表格列配置
 const columns: TableInstance['columns'] = [
+  {
+    title: '#',
+    width: 50,
+    align: 'center',
+    render: ({ rowIndex }) => h('span', {}, rowIndex + 1 + (pagination.current - 1) * pagination.pageSize),
+  },
   {
     title: '区域',
     dataIndex: 'fullNamePath',
@@ -135,11 +198,15 @@ const onClearSelected = () => {
 const removeItemByKey = (key) => {
   selectedKeys.value = selectedKeys.value.filter((k) => k !== key)
 }
-// 初始化加载
+// 数据加载完成后更新选中状态
 onMounted(() => {
-  search()
+  // 监听数据加载完成
+  watch(() => contactList.value, () => {
+    if (contactList.value.length > 0) {
+      updateSelectedKeys()
+    }
+  }, { immediate: true })
 })
-
 defineExpose({ onClearSelected, removeItemByKey })
 </script>
 

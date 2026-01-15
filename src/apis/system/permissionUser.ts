@@ -38,6 +38,23 @@ export interface PermissionUserQuery {
   tenantId: string | undefined
   sort: Array<string>
 }
+
+export interface PermissionReq {
+  userId: string | undefined
+  areas: string | ''
+  companies: string | ''
+  contacts: string | ''
+}
+
+export interface UserPermissionDataResp {
+  permissionType: string
+  info: string
+  id: string | number | undefined
+  fullNamePath?: string | undefined
+  type: string
+  level?: number
+}
+
 export interface PermissionUserPageQuery extends PermissionUserQuery, PageQuery {}
 
 /** @desc 查询用户权限位图列表 */
@@ -78,4 +95,13 @@ export function listPermissionUserDict(query?: PermissionUserQuery) {
 /** @desc 新增用户权限位图 */
 export function saveUserPermissions(data: any) {
   return http.post(`${BASE_URL}/saveUserPermissions`, data)
+}
+
+/** @desc 查询用户权限位图详情 */
+export function getPermissionUserReq(id: string) {
+  return http.get<PermissionReq>(`${BASE_URL}/getUserPermissionsReq/${id}`)
+}
+
+export function getUserPermissionsSelected(id: string) {
+  return http.get<UserPermissionDataResp[]>(`${BASE_URL}/getUserPermissionsSelected/${id}`)
 }

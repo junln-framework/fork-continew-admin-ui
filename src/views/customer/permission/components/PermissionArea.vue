@@ -40,18 +40,30 @@ import type { TreeNodeData } from '@arco-design/web-vue/es/tree/interface'
 import { listArea } from '@/apis/system/area'
 import type { AreaLevelCodes, AreaResp } from '@/apis/system/type'
 
+const props = defineProps({
+  areaCode: {
+    type: String,
+    default: null,
+  },
+})
 const emit = defineEmits(['select-area-code'])
 
 interface AreaTreeNodeData extends TreeNodeData {
   level?: number // 区域层级
   fullNamePath?: string // 完整路径
 }
-
+// 添加标志位
+const isInitializing = ref(false)
 const areaTreeData = ref<AreaTreeNodeData[]>([])
-const checkedKeys = ref<(string | number)[]>([])
+const checkedKeys = ref<string[]>([])
 const expandedKeys = ref<string[]>([])
-
+const parseAreaCodes = () => {
+  if (!props.areaCode) return []
+  return props.areaCode.split(',').map((code) => code.trim()).filter((code) => code)
+}
 watch(checkedKeys, (newKeys) => {
+  // 如果是初始化阶段，不触发emit
+  if (isInitializing.value) return
   emit('select-area-code', { key: newKeys, areaTreeData: areaTreeData.value })
 }, { deep: true })
 
@@ -66,7 +78,7 @@ const handleNodeClick = (selectedKeys, data) => {
   }
 }
 const removeItemByKey = (key) => {
-  checkedKeys.value = checkedKeys.value.filter((k) => k.id !== key)
+  checkedKeys.value = checkedKeys.value.filter((k) => k !== key)
 }
 const loadAreaTree = async (node: any) => {
   if (node.isLeaf) {
@@ -101,12 +113,32 @@ const loadAreaTree = async (node: any) => {
   }
   updateNodeChildren(areaTreeData.value, node, newNodes)
   areaTreeData.value = [...areaTreeData.value]
+
+  // 检查是否需要选中新加载的节点
+  const areaCodes = parseAreaCodes()
+  const newCheckedKeys = [...checkedKeys.value]
+  newNodes.forEach((node) => {
+    if (areaCodes.includes(node.key as string) && !newCheckedKeys.includes(node.key as string)) {
+      newCheckedKeys.push(node.key as string)
+    }
+  })
+  if (newCheckedKeys.length !== checkedKeys.value.length) {
+    // 设置初始化标志，避免触发emit
+    isInitializing.value = true
+    checkedKeys.value = newCheckedKeys
+    // 重置标志位
+    nextTick(() => {
+      isInitializing.value = false
+    })
+  }
+
   return newNodes
 }
 const loadCountryProvinceData = async () => {
   try {
     const { data: countries } = await listArea({ parentCode: '0', level: 0 })
     const treeData: AreaTreeNodeData[] = []
+    const areaCodes = parseAreaCodes()
     for (const country of countries) {
       const countryNode: AreaTreeNodeData = {
         key: country.areaCode,
@@ -139,6 +171,32 @@ const loadCountryProvinceData = async () => {
     areaTreeData.value = treeData
     areaTreeData.value = [...areaTreeData.value]
     expandedKeys.value = countries.map((item) => item.areaCode)
+
+    // 设置初始选中的节点
+    if (areaCodes.length > 0) {
+      // 首先选中已经加载的节点（国家和省份）
+      const initialCheckedKeys: string[] = []
+
+      // 递归查找节点
+      const findAndCheckNodes = (nodes: AreaTreeNodeData[]) => {
+        for (const node of nodes) {
+          if (areaCodes.includes(node.key as string)) {
+            initialCheckedKeys.push(node.key as string)
+          }
+          if (node.children && node.children.length > 0) {
+            findAndCheckNodes(node.children)
+          }
+        }
+      }
+      findAndCheckNodes(areaTreeData.value)
+      // 设置初始化标志，避免触发emit
+      isInitializing.value = true
+      checkedKeys.value = initialCheckedKeys
+      // 重置标志位
+      nextTick(() => {
+        isInitializing.value = false
+      })
+    }
   } catch (error) {
     console.error('加载失败:', error)
     Message.error('加载地区数据失败')
