@@ -115,7 +115,7 @@ const {
 } = useTable((page) => listCompany({ ...queryForm, ...page }), { immediate: true })
 const columns: TableInstance['columns'] = [
   { title: '单位编码', dataIndex: 'companyCode', slotName: 'companyCode', width: 160, align: 'center' },
-  { title: '区域', dataIndex: 'fullNamePath', slotName: 'fullNamePath', width: 220, align: 'center' },
+  { title: '区域', dataIndex: 'areaFullPathName', slotName: 'areaFullPathName', width: 220, align: 'center' },
   { title: '单位全称', dataIndex: 'companyName', slotName: 'companyName' },
   { title: '单位类型', dataIndex: 'companyTypeName', slotName: 'companyTypeName', width: 100, align: 'center' },
   { title: '合作模式', dataIndex: 'cooperationModel', slotName: 'cooperationModel', width: 160, align: 'center' },

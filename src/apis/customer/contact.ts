@@ -13,7 +13,9 @@ export interface ContactResp {
   provinceCode: string
   cityCode: string
   districtCode: string
-  fullNamePath: string
+  areaLevel: number
+  areaFullPathCode: string
+  areaFullPathName: string
   gender: string
   position: string
   birthday: string
@@ -47,7 +49,9 @@ export interface ContactDetailResp {
   provinceCode: string
   cityCode: string
   districtCode: string
-  fullNamePath: string
+  areaLevel: number
+  areaFullPathCode: string
+  areaFullPathName: string
   gender: string
   position: string
   birthday: string
@@ -73,7 +77,7 @@ export interface ContactDetailResp {
 export interface ContactQuery {
   companyName: string | undefined
   contactName: string | undefined
-  fullNamePath: string | undefined
+  areaFullPathName: string | undefined
   mobile: string | undefined
   status: string | undefined
   sort: Array<string>
@@ -112,5 +116,5 @@ export function exportContact(query: ContactQuery) {
 
 /** @desc 查询客户联系人字典 */
 export function listContactDict(query?: ContactQuery) {
-return http.get<LabelValueState[]>(`${BASE_URL}/dict`, query)
+  return http.get<LabelValueState[]>(`${BASE_URL}/dict`, query)
 }

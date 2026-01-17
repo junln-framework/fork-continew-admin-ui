@@ -50,7 +50,7 @@ const columns = [
   },
   {
     title: '区域',
-    dataIndex: 'fullNamePath',
+    dataIndex: 'areaFullPathName',
   },
   { title: '单位全称', dataIndex: 'companyName', slotName: 'companyName' },
   { title: '单位类型', dataIndex: 'companyTypeName', slotName: 'companyTypeName', width: 100, align: 'center' },

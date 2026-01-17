@@ -168,8 +168,8 @@ const columns: TableInstance['columns'] = [
   },
   {
     title: '区域',
-    dataIndex: 'fullNamePath',
-    key: 'fullNamePath',
+    dataIndex: 'areaFullPathName',
+    key: 'areaFullPathName',
     align: 'center',
     width: 220,
   },

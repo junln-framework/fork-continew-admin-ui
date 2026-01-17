@@ -10,7 +10,9 @@ export interface CompanyResp {
   cityCode: string
   districtCode: string
   zipCode: string
-  fullNamePath: string
+  areaLevel: number
+  areaFullPathCode: string
+  areaFullPathName: string
   companyCode: string
   companyName: string
   companyShortName: string
@@ -51,7 +53,9 @@ export interface CompanyDetailResp {
   cityCode: string
   districtCode: string
   zipCode: string
-  fullNamePath: string
+  areaLevel: number
+  areaFullPathCode: string
+  areaFullPathName: string
   companyCode: string
   companyName: string
   companyShortName: string

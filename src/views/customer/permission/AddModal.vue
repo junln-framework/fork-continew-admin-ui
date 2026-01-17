@@ -45,7 +45,7 @@
               </a-tab-pane>
 
               <!-- 权限预览 -->
-              <a-tab-pane key="preview" title="权限预览">
+              <a-tab-pane v-if="false" key="preview" title="权限预览">
                 <PermissionPreview />
               </a-tab-pane>
             </a-tabs>
@@ -297,17 +297,17 @@ const handleSave = async () => {
   // 构建权限字符串
   const areas = selectDataList.value
     .filter((item) => item.type === 'area')
-    .map((item) => item.id)
+    .map((item) => item.code)
     .join(',')
 
   const companies = selectDataList.value
     .filter((item) => item.type === 'company')
-    .map((item) => item.code || item.id)
+    .map((item) => item.code)
     .join(',')
 
   const contacts = selectDataList.value
     .filter((item) => item.type === 'contacts')
-    .map((item) => item.code || item.id)
+    .map((item) => item.code)
     .join(',')
 
   const saveReq = {
@@ -345,17 +345,17 @@ const handleCancelConfirm = () => {
 const hasAnyPermission = computed(() => {
   const areas = selectDataList.value
     .filter((item) => item.type === 'area')
-    .map((item) => item.id)
+    .map((item) => item.code)
     .join(',')
 
   const companies = selectDataList.value
     .filter((item) => item.type === 'company')
-    .map((item) => item.code || item.id)
+    .map((item) => item.code)
     .join(',')
 
   const contacts = selectDataList.value
     .filter((item) => item.type === 'contacts')
-    .map((item) => item.code || item.id)
+    .map((item) => item.code)
     .join(',')
 
   return !!(areas || companies || contacts)

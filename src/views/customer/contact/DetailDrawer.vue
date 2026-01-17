@@ -10,7 +10,7 @@
       <a-descriptions-item label="省编码(国标6位)">{{ dataDetail?.provinceCode }}</a-descriptions-item>
       <a-descriptions-item label="市编码(国标6位)">{{ dataDetail?.cityCode }}</a-descriptions-item>
       <a-descriptions-item label="区/县编码(国标6位)">{{ dataDetail?.districtCode }}</a-descriptions-item>
-      <a-descriptions-item label="区域全路径显示">{{ dataDetail?.fullNamePath }}</a-descriptions-item>
+      <a-descriptions-item label="区域全路径显示">{{ dataDetail?.areaFullPathName }}</a-descriptions-item>
       <a-descriptions-item label="性别：0-未知，1-男，2-女">{{ dataDetail?.gender }}</a-descriptions-item>
       <a-descriptions-item label="职位">{{ dataDetail?.position }}</a-descriptions-item>
       <a-descriptions-item label="生日">{{ dataDetail?.birthday }}</a-descriptions-item>

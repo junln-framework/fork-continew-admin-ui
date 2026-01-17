@@ -84,7 +84,7 @@ const statusOptions = [
 const queryForm = reactive<ContactQuery>({
   companyName: undefined,
   contactName: undefined,
-  fullNamePath: undefined,
+  areaFullPathName: undefined,
   mobile: undefined,
   status: undefined,
   sort: ['id,desc'],
@@ -100,7 +100,7 @@ const {
 const columns: TableInstance['columns'] = [
 
   { title: '联系人编码', dataIndex: 'contactCode', slotName: 'contactCode' },
-  { title: '区域', dataIndex: 'fullNamePath', slotName: 'fullNamePath' },
+  { title: '区域', dataIndex: 'areaFullPathName', slotName: 'areaFullPathName' },
   { title: '单位名称', dataIndex: 'companyName', slotName: 'companyName' },
   { title: '姓名', dataIndex: 'contactName', slotName: 'contactName' },
   { title: '科室/部门', dataIndex: 'department', slotName: 'department' },
@@ -120,7 +120,7 @@ const columns: TableInstance['columns'] = [
 // 重置
 const reset = () => {
   queryForm.contactName = undefined
-  queryForm.fullNamePath = undefined
+  queryForm.areaFullPathName = undefined
   queryForm.mobile = undefined
   queryForm.status = undefined
   search()

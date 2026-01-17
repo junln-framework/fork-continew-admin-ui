@@ -7,7 +7,7 @@
       <a-descriptions-item label="市编码(国标6位)">{{ dataDetail?.cityCode }}</a-descriptions-item>
       <a-descriptions-item label="区/县编码(国标6位)">{{ dataDetail?.districtCode }}</a-descriptions-item>
       <a-descriptions-item label="邮政编码">{{ dataDetail?.zipCode }}</a-descriptions-item>
-      <a-descriptions-item label="区域全路径显示">{{ dataDetail?.fullNamePath }}</a-descriptions-item>
+      <a-descriptions-item label="区域全路径显示">{{ dataDetail?.areaFullPathName }}</a-descriptions-item>
       <a-descriptions-item label="客户单位编码">{{ dataDetail?.companyCode }}</a-descriptions-item>
       <a-descriptions-item label="客户单位全称">{{ dataDetail?.companyName }}</a-descriptions-item>
       <a-descriptions-item label="客户单位简称">{{ dataDetail?.companyShortName }}</a-descriptions-item>

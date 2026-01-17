@@ -55,7 +55,7 @@ const emit = defineEmits(['select-contact-code'])
 const queryForm = reactive<ContactQuery>({
   companyName: undefined,
   contactName: undefined,
-  fullNamePath: undefined,
+  areaFullPathName: undefined,
   mobile: undefined,
   status: undefined,
   sort: ['id,desc'],
@@ -147,8 +147,8 @@ const columns: TableInstance['columns'] = [
   },
   {
     title: '区域',
-    dataIndex: 'fullNamePath',
-    key: 'fullNamePath',
+    dataIndex: 'areaFullPathName',
+    key: 'areaFullPathName',
     align: 'center',
     width: 220,
   },

@@ -44,7 +44,9 @@ const [form, resetForm] = useResetReactive({
   cityCode: '',
   districtCode: '',
   zipCode: '',
-  fullNamePath: '',
+  areaLevel: 0,
+  areaFullPathCode: '',
+  areaFullPathName: '',
   companyName: '',
   cooperationModelArr: [],
   cooperationModel: 0,
@@ -288,7 +290,9 @@ const columns: ColumnItem[] = reactive([
 
         if (selectedNode != null) {
           form.zipCode = selectedNode.node?.zipCode || ''
-          form.fullNamePath = selectedNode.node?.fullNamePath || ''
+          form.areaLevel = selectedNode.node?.level || 0
+          form.areaFullPathCode = selectedNode.node?.fullCodePath || ''
+          form.areaFullPathName = selectedNode.node?.fullNamePath || ''
           form.countryCode = selectedNode.codes.countryCode || ''
           form.provinceCode = selectedNode.codes.provinceCode || ''
           form.cityCode = selectedNode.codes.cityCode || ''
@@ -299,7 +303,7 @@ const columns: ColumnItem[] = reactive([
   },
   {
     label: '',
-    field: 'fullNamePath',
+    field: 'areaFullPathName',
     type: 'input',
     span: 12,
     props: {
