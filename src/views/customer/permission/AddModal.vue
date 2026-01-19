@@ -172,8 +172,14 @@ const selectColumns: TableInstance['columns'] = [
 const handleTabChange = (key) => {
   console.warn('切换到标签页:', key)
 }
-const findNodeByKey = (treeData: AreaTreeNodeData[], searchKeys) => {
+const findNodeByKey = (selected: UserPermissionDataResp[], treeData: AreaTreeNodeData[], searchKeys) => {
   const results: UserPermissionDataResp[] = []
+  // 先将selected中已经存在的searchKeys加入results
+  selected.forEach((item) => {
+    if (searchKeys.includes(item.code)) {
+      results.push(item)
+    }
+  })
   const searchRecursive = (nodes: AreaTreeNodeData[]) => {
     for (const node of nodes) {
       // 如果当前节点的key在searchKeys数组中
@@ -208,7 +214,7 @@ const handlePermissionChange = (type, selected) => {
     case 'area': {
       permissionChanges[type] = Array.isArray(selected.key) ? selected.key : [selected.key]
       // 获取新选择的区域数据
-      const newAreaData = findNodeByKey(selected.areaTreeData, selected.key)
+      const newAreaData = findNodeByKey(selectDataList.value, selected.areaTreeData, selected.key)
       // 1. 先移除该类型的所有现有数据
       const otherTypesData = selectDataList.value.filter((item) => item.type !== type)
       // 2. 添加新选择的区域数据
@@ -255,8 +261,6 @@ const handlePermissionChange = (type, selected) => {
 }
 // 移除方法
 const handleRemoveItem = (record: UserPermissionDataResp) => {
-  // 1. 从表格中移除数据
-
   // 2. 更新树形组件的选中状态
   if (record.type === 'area' && record.id && permissionAreaRef.value) {
     selectDataList.value = selectDataList.value.filter((item) => item.id !== record.code)

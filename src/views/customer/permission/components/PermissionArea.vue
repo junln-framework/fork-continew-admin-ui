@@ -192,6 +192,12 @@ const loadCountryProvinceData = async () => {
       // 设置初始化标志，避免触发emit
       isInitializing.value = true
       checkedKeys.value = initialCheckedKeys
+      // 这里还需要将没有默认加载的节点也加入选中状态,已防着删除时丢失选中状态
+      areaCodes.forEach((code) => {
+        if (!checkedKeys.value.includes(code)) {
+          checkedKeys.value.push(code)
+        }
+      })
       // 重置标志位
       nextTick(() => {
         isInitializing.value = false
