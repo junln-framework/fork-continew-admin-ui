@@ -14,7 +14,7 @@
     >
       <template #toolbar-left>
         <a-input-search v-model="queryForm.contactName" placeholder="请输入姓名" allow-clear @search="search" />
-        <a-input-search v-model="queryForm.fullNamePath" placeholder="请输入区域" allow-clear @search="search" />
+        <a-input-search v-model="queryForm.areaFullPathName" placeholder="请输入区域" allow-clear @search="search" />
         <a-input-search v-model="queryForm.mobile" placeholder="请输入手机号" allow-clear @search="search" />
         <a-select
           v-model="queryForm.status"
@@ -112,7 +112,6 @@ const columns: TableInstance['columns'] = [
     slotName: 'action',
     width: 160,
     align: 'center',
-    fixed: !isMobile() ? 'right' : undefined,
     show: has.hasPermOr(['customer:contact:get', 'customer:contact:update', 'customer:contact:delete']),
   },
 ]

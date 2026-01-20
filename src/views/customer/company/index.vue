@@ -36,9 +36,6 @@
           <template #default>导出</template>
         </a-button>
       </template>
-      <template #companyTypeCode="{ record }">
-        <GiCellTag :value="record.companyTypeCode" :dict="company_type" />
-      </template>
       <template #cooperationModel="{ record }">
         <span>
           {{
@@ -48,6 +45,9 @@
               .join('、')
           }}
         </span>
+      </template>
+      <template #companyTypeCode="{ record }">
+        <GiCellTag :value="record.companyTypeCode" :dict="company_type" />
       </template>
       <template #status="{ record }">
         <span>
@@ -85,6 +85,7 @@
 import type { TableInstance } from '@arco-design/web-vue'
 import AddModal from './AddModal.vue'
 import DetailDrawer from './DetailDrawer.vue'
+import { getUserFullConfig } from '@/apis/system/field-visibility'
 import { type CompanyQuery, type CompanyResp, deleteCompany, exportCompany, listCompany } from '@/apis/customer/company'
 import { useDownload, useTable } from '@/hooks'
 import { useDict } from '@/hooks/app'
@@ -95,25 +96,8 @@ defineOptions({ name: 'Company' })
 
 const { company_type } = useDict('company_type')
 
-const queryForm = reactive<CompanyQuery>({
-  countryCode: undefined,
-  provinceCode: undefined,
-  cityCode: undefined,
-  companyCode: undefined,
-  companyName: undefined,
-  cooperationModel: undefined,
-  createUser: undefined,
-  sort: ['id,desc'],
-})
-
-const {
-  tableData: dataList,
-  loading,
-  pagination,
-  search,
-  handleDelete,
-} = useTable((page) => listCompany({ ...queryForm, ...page }), { immediate: true })
-const columns: TableInstance['columns'] = [
+const fieldConfig = ref<Record<string, { visible: boolean }>>({})
+const columnTemplates: TableInstance['columns'] = [
   { title: '单位编码', dataIndex: 'companyCode', slotName: 'companyCode', width: 160, align: 'center' },
   { title: '区域', dataIndex: 'areaFullPathName', slotName: 'areaFullPathName', width: 220, align: 'center' },
   { title: '单位全称', dataIndex: 'companyName', slotName: 'companyName' },
@@ -132,6 +116,53 @@ const columns: TableInstance['columns'] = [
     show: has.hasPermOr(['customer:company:get', 'customer:company:update', 'customer:company:delete']),
   },
 ]
+const columns = ref<TableInstance['columns']>([])
+const filterColumns = () => {
+  columns.value = columnTemplates.filter((col) => {
+    // 操作列：按权限显示
+    if (col.dataIndex === 'action') {
+      return col.show
+    }
+    // 其他列：根据配置显示（默认显示）
+    return fieldConfig.value[col.dataIndex]?.visible !== false
+  })
+}
+const loadFieldConfig = async () => {
+  try {
+    const res = await getUserFullConfig({ businessTable: 'cust_company' })
+    const config = res.data || {}
+    const camelCaseConfig: Record<string, { visible: boolean }> = {}
+    Object.keys(config).forEach((key) => {
+      const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase())
+      camelCaseConfig[camelKey] = { visible: config[key].visible ?? true }
+    })
+    fieldConfig.value = camelCaseConfig
+    filterColumns()
+  } catch (e) {
+    console.error('加载字段配置失败：', e)
+    fieldConfig.value = {}
+    columns.value = [...columnTemplates]
+  }
+}
+const queryForm = reactive<CompanyQuery>({
+  countryCode: undefined,
+  provinceCode: undefined,
+  cityCode: undefined,
+  companyCode: undefined,
+  companyName: undefined,
+  cooperationModel: undefined,
+  createUser: undefined,
+  sort: ['id,desc'],
+})
+
+const {
+  tableData: dataList,
+  loading,
+  pagination,
+  search,
+  handleDelete,
+} = useTable((page) => listCompany({ ...queryForm, ...page }), { immediate: false })
+
 // 合作模式选项配置（抽离为常量，便于统一维护）
 const cooperationOptions = [
   { label: '供应商', value: 1 },
@@ -185,6 +216,12 @@ const DetailDrawerRef = ref<InstanceType<typeof DetailDrawer>>()
 const onDetail = (record: CompanyResp) => {
   DetailDrawerRef.value?.onOpen(record.id)
 }
+
+onMounted(async () => {
+  await loadFieldConfig()
+  search()
+})
+watch(fieldConfig, filterColumns, { immediate: false })
 </script>
 
 <style scoped lang="scss"></style>

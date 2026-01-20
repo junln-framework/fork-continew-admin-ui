@@ -2,7 +2,7 @@
 <template>
   <a-modal
     v-model:visible="visible"
-    :title="`权限分配:${selectedUserName}`"
+    :title="`区域权限分配:${selectedUserName}`"
     :width="width > 768 ? '85%' : '95%'"
     unmount-on-close
     :body-style="{ maxHeight: '80vh', overflow: 'auto', padding: '16px' }"
@@ -109,11 +109,12 @@
 </template>
 
 <script setup lang="ts">
-import { Message, Modal, type TableInstance } from '@arco-design/web-vue'
-import { useWindowSize } from '@vueuse/core'
 import { reactive, ref } from 'vue'
+import { useWindowSize } from '@vueuse/core'
+import { Message, type TableInstance } from '@arco-design/web-vue'
+
 import type { TreeNodeData } from '@arco-design/web-vue/es/tree/interface'
-// 导入组件
+
 import PermissionArea from './components/PermissionArea.vue'
 import PermissionCompany from './components/PermissionCompany.vue'
 import PermissionContacts from './components/PermissionContacts.vue'
@@ -137,13 +138,11 @@ const permissionReq: PermissionReq = {
   contacts: '',
 }
 const selectedUserName = ref<string>('')
-
 const permissionAreaRef = ref()
 const permissionCompanyRef = ref()
 const permissionContactsRef = ref()
 const selectDataList = ref<UserPermissionDataResp[]>([])
 
-// 权限变更记录
 const permissionChanges = reactive({
   area: [],
   company: [],

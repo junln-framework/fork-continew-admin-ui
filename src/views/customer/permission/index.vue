@@ -31,19 +31,24 @@
       </template>
       <template #action="{ record }">
         <a-space>
-          <a-link v-permission="['system:user:get']" title="数据权限" @click="assignDataRight(record)">数据权限</a-link>
+          <a-link v-permission="['system:user:get']" title="区域权限分配(包含区域,单位,联系人)" @click="assignDataRightArea(record)">区域权限</a-link>
+        </a-space>
+        <a-space>
+          <a-link v-permission="['system:user:get']" title="业务字段权限分配" @click="assignDataRightBusinessField(record)">字段权限</a-link>
         </a-space>
       </template>
     </GiTable>
     <AddModal ref="AddModalRef" />
+    <AddModalField ref="AddModalFieldRef" />
   </GiPageLayout>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
 import 'vue3-tree-org/lib/vue3-tree-org.css'
-import { Vue3TreeOrg } from 'vue3-tree-org'
 import type { TableInstance } from '@arco-design/web-vue'
 import AddModal from './AddModal.vue'
+import AddModalField from './AddModalField.vue'
 import type { UserResp } from '@/apis/system/type'
 import { listUser } from '@/apis/system/user'
 import { DisEnableStatusList } from '@/constant/common'
@@ -127,13 +132,14 @@ onMounted(() => {
 })
 // 过滤树s
 const AddModalRef = ref<InstanceType<typeof AddModal>>()
+const AddModalFieldRef = ref<InstanceType<typeof AddModalField>>()
 // 新增
-const assignDataRight = (record: UserResp) => {
+const assignDataRightArea = (record: UserResp) => {
   AddModalRef.value?.onInitData(record.id, `${record.deptNames} ${record.nickname}`)
 }
-// const handleAdd = (record: AreaResp) => {
-//   onAdd(record.id)
-// }
+const assignDataRightBusinessField = (record: UserResp) => {
+  AddModalFieldRef.value?.onInitData(record.id, `${record.deptNames} ${record.nickname}`)
+}
 </script>
 
 <style scoped lang="scss">
