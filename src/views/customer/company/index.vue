@@ -85,7 +85,7 @@
 import type { TableInstance } from '@arco-design/web-vue'
 import AddModal from './AddModal.vue'
 import DetailDrawer from './DetailDrawer.vue'
-import { getUserFullConfig } from '@/apis/system/field-visibility'
+import { getUserVisibleConfig } from '@/apis/system/field-visibility'
 import { type CompanyQuery, type CompanyResp, deleteCompany, exportCompany, listCompany } from '@/apis/customer/company'
 import { useDownload, useTable } from '@/hooks'
 import { useDict } from '@/hooks/app'
@@ -129,12 +129,12 @@ const filterColumns = () => {
 }
 const loadFieldConfig = async () => {
   try {
-    const res = await getUserFullConfig({ businessTable: 'cust_company' })
+    const res = await getUserVisibleConfig({ businessTable: 'cust_company' })
     const config = res.data || {}
     const camelCaseConfig: Record<string, { visible: boolean }> = {}
     Object.keys(config).forEach((key) => {
       const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase())
-      camelCaseConfig[camelKey] = { visible: config[key].visible ?? true }
+      camelCaseConfig[camelKey] = { visible: config[key] ?? true }
     })
     fieldConfig.value = camelCaseConfig
     filterColumns()

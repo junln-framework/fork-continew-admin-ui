@@ -28,6 +28,11 @@ export const getFieldMeta = (params) => {
 }
 
 // 获取用户完整配置
+export const getUserVisibleConfig = (params) => {
+  return http.get<[]>(`${BASE_URL}/user-visible-config`, params)
+}
+
+// 设置用户完整配置
 export const getUserFullConfig = (params) => {
   return http.get<[]>(`${BASE_URL}/user-full-config`, params)
 }
