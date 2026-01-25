@@ -39,13 +39,19 @@ import { Message } from '@arco-design/web-vue'
 import type { TreeNodeData } from '@arco-design/web-vue/es/tree/interface'
 import { listArea } from '@/apis/system/area'
 import type { AreaLevelCodes, AreaResp } from '@/apis/system/type'
+import type { AreaCooperationModel } from '@/apis/system/permissionUser'
 
 const props = defineProps({
   areaCode: {
     type: String,
     default: null,
   },
+  areaList: {
+    type: Array as PropType<AreaCooperationModel[]>,
+    default: () => [],
+  },
 })
+
 const emit = defineEmits(['select-area-code'])
 
 interface AreaTreeNodeData extends TreeNodeData {

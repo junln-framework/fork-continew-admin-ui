@@ -16,6 +16,8 @@
 <script setup lang="ts">
 import { Message } from '@arco-design/web-vue'
 import { useWindowSize } from '@vueuse/core'
+import toInteger from 'xe-utils/toInteger'
+import { number } from 'echarts'
 import { addCompany, getCompany, updateCompany } from '@/apis/customer/company'
 import { listArea } from '@/apis/system/area'
 import { type ColumnItem, GiForm } from '@/components/GiForm'
@@ -34,7 +36,7 @@ const visible = ref(false)
 const isUpdate = computed(() => !!dataId.value)
 const title = computed(() => (isUpdate.value ? '修改客户单位' : '新增客户单位'))
 const formRef = ref<InstanceType<typeof GiForm>>()
-const { company_type } = useDict('company_type')
+const { company_type, company_cooperation_model } = useDict('company_type', 'company_cooperation_model')
 
 const [form, resetForm] = useResetReactive({
   // todo 待补充
@@ -49,7 +51,7 @@ const [form, resetForm] = useResetReactive({
   areaFullPathName: '',
   companyName: '',
   cooperationModelArr: [],
-  cooperationModel: 0,
+  companyCooperationModel: 0,
   companyTypeCode: '',
   creditCode: '',
   legalPerson: '',
@@ -67,13 +69,6 @@ const [form, resetForm] = useResetReactive({
 
 })
 
-// 合作模式选项配置（抽离为常量，便于统一维护）
-const cooperationOptions = [
-  { label: '供应商', value: 1 },
-  { label: '终端客户', value: 2 },
-  { label: '代理进销商', value: 4 },
-  { label: '渠道客户', value: 8 },
-]
 // 绑定选中值
 // const cooperationCheckedValues = ref([])
 const areaTreeData = ref<AreaResp[]>([])
@@ -92,7 +87,7 @@ const columns: ColumnItem[] = reactive([
     span: 24,
     required: true,
     props: {
-      options: cooperationOptions,
+      options: company_cooperation_model,
     },
   },
   {
@@ -437,7 +432,7 @@ const save = async () => {
     const isInvalid = await formRef.value?.formRef?.validate()
     if (isInvalid) return false
     // 处理多选框值
-    form.cooperationModel = form.cooperationModelArr.reduce((a, b) => a + b, 0) // 位运算合并值
+    form.companyCooperationModel = form.cooperationModelArr.reduce((a, b) => toInteger(a) + toInteger(b), 0) // 位运算合并值
 
     if (isUpdate.value) {
       await updateCompany(form, dataId.value)
@@ -512,9 +507,9 @@ const onUpdate = async (id: string) => {
   // 4. 填充表单数据
   Object.assign(form, data)
   // 处理多选框值
-  const cooperationValues: number[] = []
-  cooperationOptions.forEach((option) => {
-    if ((data.cooperationModel & option.value) !== 0) {
+  const cooperationValues: string[] = []
+  company_cooperation_model.value.forEach((option) => {
+    if ((data.companyCooperationModel & toInteger(option.value)) !== 0) {
       cooperationValues.push(option.value)
     }
   })

@@ -9,6 +9,7 @@ export interface PermissionUserResp {
   permissionType: string
   segment: string
   bitmapValue: string
+  bitmapCooperationModel: number
   bitCount: string
   lastUpdateTime: string
   tenantId: string
@@ -22,6 +23,7 @@ export interface PermissionUserDetailResp {
   permissionType: string
   segment: string
   bitmapValue: string
+  bitmapCooperationModel: number
   bitCount: string
   lastUpdateTime: string
   tenantId: string
@@ -33,27 +35,38 @@ export interface PermissionUserQuery {
   permissionType: string | undefined
   segment: string | undefined
   bitmapValue: string | undefined
+  bitmapCooperationModel: number | undefined
   bitCount: string | undefined
   lastUpdateTime: string | undefined
   tenantId: string | undefined
   sort: Array<string>
 }
-
+export interface AreaCooperationModel {
+  /** 区域代码 */
+  areaCode: string | undefined
+  /** 合作模式位图 */
+  bitmapCooperationModel: number
+}
 export interface PermissionReq {
   userId: string | undefined
-  areas: string | ''
   companies: string | ''
   contacts: string | ''
+  /** 区域合作模式列表 */
+  areas: string | ''
+  areaList?: AreaCooperationModel[]
 }
 
 export interface UserPermissionDataResp {
-  permissionType: string
-  info: string
+  permissionType: string | undefined
+  info: string | undefined
   id?: string | number | undefined
   code: string | undefined
   fullNamePath?: string | undefined
-  type: string
-  level?: number
+  type: string | undefined
+  level: number | undefined
+  bitmapCooperationModel: number | undefined
+  bitmapCooperationModelArr: string[]
+
 }
 
 export interface PermissionUserPageQuery extends PermissionUserQuery, PageQuery {}

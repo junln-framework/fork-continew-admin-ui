@@ -66,6 +66,18 @@
               <a-tag v-else-if="record.level === 20" color="magenta">{{ record.permissionType }}</a-tag>
               <a-tag v-else color="gray">{{ record.permissionType }}</a-tag>
             </template>
+            <template #info="{ record }">
+              <a-tag size="medium">  {{ record.info }}</a-tag>
+              <a-select
+                v-if="record.level! < 4"
+                v-model="record.bitmapCooperationModelArr"
+                :style="{ width: '200px' }" size="mini"
+                :options="company_cooperation_model"
+                :max-tag-count="2"
+                placeholder="指定分类..." multiple
+              >
+              </a-select>
+            </template>
             <template #action="{ record }">
               <a-button
                 status="danger"
@@ -115,16 +127,18 @@ import { Message, type TableInstance } from '@arco-design/web-vue'
 
 import type { TreeNodeData } from '@arco-design/web-vue/es/tree/interface'
 
+import toInteger from 'xe-utils/toInteger'
 import PermissionArea from './components/PermissionArea.vue'
 import PermissionCompany from './components/PermissionCompany.vue'
 import PermissionContacts from './components/PermissionContacts.vue'
 import PermissionPreview from './components/PermissionPreview.vue'
-import { type PermissionReq, type UserPermissionDataResp, getPermissionUserReq, getUserPermissionsSelected, saveUserPermissions } from '@/apis/system/permissionUser'
+import { useDict } from '@/hooks/app'
+import { type AreaCooperationModel, type PermissionReq, type UserPermissionDataResp, getPermissionUserReq, getUserPermissionsSelected, saveUserPermissions } from '@/apis/system/permissionUser'
 
 const activeTab = ref('area')
 const visible = ref(false)
 const { width } = useWindowSize()
-
+const { company_cooperation_model } = useDict('company_cooperation_model')
 interface AreaTreeNodeData extends TreeNodeData {
   level?: number // 区域层级
   fullNamePath?: string // 完整路径
@@ -133,9 +147,10 @@ interface AreaTreeNodeData extends TreeNodeData {
 
 const permissionReq: PermissionReq = {
   userId: undefined,
-  areas: '',
+  areaList: undefined,
   companies: '',
   contacts: '',
+  areas: '',
 }
 const selectedUserName = ref<string>('')
 const permissionAreaRef = ref()
@@ -157,13 +172,13 @@ const selectColumns: TableInstance['columns'] = [
     render: ({ rowIndex }) => h('span', {}, rowIndex + 1),
   },
   { title: '权限类型', dataIndex: 'permissionType', slotName: 'permissionType', align: 'center', minWidth: 80, ellipsis: true, tooltip: true, width: 110 },
-  { title: '区域/单位/联系人', dataIndex: 'info', ellipsis: true, tooltip: true },
+  { title: '区域/单位/联系人', dataIndex: 'info', slotName: 'info', ellipsis: true, tooltip: true },
   {
     title: '操作',
     dataIndex: 'action',
     slotName: 'action',
     width: 100,
-    align: 'center',
+    align: 'right',
   },
 ]
 
@@ -183,19 +198,24 @@ const findNodeByKey = (selected: UserPermissionDataResp[], treeData: AreaTreeNod
     for (const node of nodes) {
       // 如果当前节点的key在searchKeys数组中
       if (searchKeys.includes(node.key)) {
-        const permissionType = node.level === 1
-          ? '区域(省份)'
-          : node.level === 2
-            ? '区域(城市)'
-            : node.level === 3 ? '区域(区县)' : '顶级区域'
-        results.push({
-          permissionType,
-          info: node.fullNamePath as string,
-          id: node.key as string,
-          code: node.key as string,
-          type: 'area',
-          level: node.level,
-        })
+        // 再判断一次results是否存在code
+        if (!results.some((item) => item.code === node.key)) {
+          const permissionType = node.level === 1
+            ? '区域(省份)'
+            : node.level === 2
+              ? '区域(城市)'
+              : node.level === 3 ? '区域(区县)' : '顶级区域'
+          results.push({
+            permissionType,
+            info: node.fullNamePath as string,
+            id: node.key as string,
+            code: node.key as string,
+            type: 'area',
+            level: node.level,
+            bitmapCooperationModel: 0,
+            bitmapCooperationModelArr: [],
+          })
+        }
       }
 
       // 如果有子节点，递归搜索子节点
@@ -232,6 +252,7 @@ const handlePermissionChange = (type, selected) => {
           code: company ? company.companyCode : '',
           type: 'company',
           level: 10,
+          bitmapCooperationModel: 0,
         }
       })
       selectDataList.value = [...otherTypesData, ...newCompanyData]
@@ -249,6 +270,7 @@ const handlePermissionChange = (type, selected) => {
           code: contact ? contact.contactCode : '',
           type: 'contacts',
           level: 20,
+          bitmapCooperationModel: 0,
         }
       })
       selectDataList.value = [...otherTypesData, ...newContactData]
@@ -283,12 +305,38 @@ const handleRemoveItem = (record: UserPermissionDataResp) => {
     }
   }
 }
+
 // 加载用户权限
 const loadUserPermissions = async () => {
   if (!permissionReq.userId) return
   getUserPermissionsSelected(permissionReq.userId).then((res) => {
     if (res.success) {
-      selectDataList.value = res.data
+      function convertBitmapToStringArray(bitmap: number): string[] {
+        if (!bitmap || bitmap === 0) {
+          return []
+        }
+        const result: string[] = []
+        for (let i = 0; i < 32; i++) {
+          const bitValue = 1 << i // 计算2的i次方
+          if (bitmap & bitValue) {
+            result.push(bitValue.toString()) // 转换为字符串，如 "1", "2", "4", "8"...
+          }
+        }
+        return result
+      }
+      selectDataList.value = res.data.map((item) => {
+        const processedItem = { ...item }
+        if (processedItem.type === 'area') {
+          if (!processedItem.bitmapCooperationModelArr) {
+            if (typeof processedItem.bitmapCooperationModel === 'number') {
+              processedItem.bitmapCooperationModelArr = convertBitmapToStringArray(processedItem.bitmapCooperationModel)
+            } else {
+              processedItem.bitmapCooperationModelArr = []
+            }
+          }
+        }
+        return processedItem
+      })
       selectDataList.value = [...selectDataList.value]
     }
   }).catch((error) => {
@@ -302,6 +350,16 @@ const handleSave = async () => {
     .filter((item) => item.type === 'area')
     .map((item) => item.code)
     .join(',')
+  const areaList: AreaCooperationModel[] = []
+  selectDataList.value
+    .filter((item) => item.type === 'area')
+    .forEach((area) => {
+      const areaModel: AreaCooperationModel = {
+        areaCode: area.code,
+        bitmapCooperationModel: (area.bitmapCooperationModelArr || []).reduce((a, b) => toInteger(a) + toInteger(b), 0),
+      }
+      areaList.push(areaModel)
+    })
 
   const companies = selectDataList.value
     .filter((item) => item.type === 'company')
@@ -315,7 +373,7 @@ const handleSave = async () => {
 
   const saveReq = {
     userId: permissionReq.userId,
-    areas,
+    areaList,
     companies,
     contacts,
   }
@@ -365,19 +423,19 @@ const hasAnyPermission = computed(() => {
 })
 
 // 重置权限
-const resetPermissions = () => {
-  if (permissionReq.userId) {
-    loadUserPermissions()
-  } else {
-    permissionReq.areas = ''
-    permissionReq.companies = ''
-    permissionReq.contacts = ''
-    Object.keys(permissionChanges).forEach((key) => {
-      permissionChanges[key] = []
-    })
-  }
-  Message.info('权限已重置')
-}
+// const resetPermissions = () => {
+//   if (permissionReq.userId) {
+//     loadUserPermissions()
+//   } else {
+//     // permissionReq.areas = ''
+//     permissionReq.companies = ''
+//     permissionReq.contacts = ''
+//     Object.keys(permissionChanges).forEach((key) => {
+//       permissionChanges[key] = []
+//     })
+//   }
+//   Message.info('权限已重置')
+// }
 
 // 新增
 const onInitData = (userId: string, info: string) => {
@@ -385,6 +443,7 @@ const onInitData = (userId: string, info: string) => {
   getPermissionUserReq(userId).then((res) => {
     visible.value = true
     permissionReq.areas = res.data.areas
+    permissionReq.areaList = res.data.areaList
     permissionReq.companies = res.data.companies
     permissionReq.contacts = res.data.contacts
     loadUserPermissions()

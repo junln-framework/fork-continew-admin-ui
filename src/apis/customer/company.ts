@@ -18,7 +18,7 @@ export interface CompanyResp {
   companyShortName: string
   companyTypeCode: string
   companyTypeName: string
-  cooperationModel: number
+  companyCooperationModel: number
   industryType: string
   registerCapital: string
   registerAddress: string
@@ -61,7 +61,7 @@ export interface CompanyDetailResp {
   companyShortName: string
   companyTypeCode: string
   companyTypeName: string
-  cooperationModel: number
+  companyCooperationModel: number
   industryType: string
   registerCapital: string
   registerAddress: string
@@ -94,7 +94,7 @@ export interface CompanyQuery {
   cityCode: string | undefined
   companyCode: string | undefined
   companyName: string | undefined
-  cooperationModel: string | undefined
+  companyCooperationModel: string | undefined
   createUser: string | undefined
   sort: Array<string>
 }
