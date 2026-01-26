@@ -17,7 +17,6 @@
 import { Message } from '@arco-design/web-vue'
 import { useWindowSize } from '@vueuse/core'
 import toInteger from 'xe-utils/toInteger'
-import { number } from 'echarts'
 import { addCompany, getCompany, updateCompany } from '@/apis/customer/company'
 import { listArea } from '@/apis/system/area'
 import { type ColumnItem, GiForm } from '@/components/GiForm'

@@ -36,11 +36,11 @@
           <template #default>导出</template>
         </a-button>
       </template>
-      <template #cooperationModel="{ record }">
+      <template #companyCooperationModel="{ record }">
         <span>
           {{
-            cooperationOptions
-              .filter(option => (record.cooperationModel & option.value) !== 0)
+            company_cooperation_model
+              .filter(option => (record.companyCooperationModel & toInteger(option.value)) !== 0)
               .map(option => option.label)
               .join('、')
           }}
@@ -83,6 +83,7 @@
 
 <script setup lang="ts">
 import type { TableInstance } from '@arco-design/web-vue'
+import toInteger from 'xe-utils/toInteger'
 import AddModal from './AddModal.vue'
 import DetailDrawer from './DetailDrawer.vue'
 import { getUserVisibleConfig } from '@/apis/system/field-visibility'
@@ -94,7 +95,7 @@ import has from '@/utils/has'
 
 defineOptions({ name: 'Company' })
 
-const { company_type } = useDict('company_type')
+const { company_type, company_cooperation_model } = useDict('company_type', 'company_cooperation_model')
 
 const fieldConfig = ref<Record<string, { visible: boolean }>>({})
 const columnTemplates: TableInstance['columns'] = [
@@ -102,7 +103,7 @@ const columnTemplates: TableInstance['columns'] = [
   { title: '区域', dataIndex: 'areaFullPathName', slotName: 'areaFullPathName', width: 220, align: 'center' },
   { title: '单位全称', dataIndex: 'companyName', slotName: 'companyName' },
   { title: '单位类型', dataIndex: 'companyTypeName', slotName: 'companyTypeName', width: 100, align: 'center' },
-  { title: '合作模式', dataIndex: 'cooperationModel', slotName: 'cooperationModel', width: 160, align: 'center' },
+  { title: '合作模式', dataIndex: 'companyCooperationModel', slotName: 'companyCooperationModel', width: 160, align: 'center' },
   { title: '状态', dataIndex: 'status', slotName: 'status', width: 80, align: 'center' },
   { title: '创建人', dataIndex: 'createUserString', slotName: 'createUser', width: 110, align: 'center' },
   { title: '创建时间', dataIndex: 'createTime', slotName: 'createTime', width: 180 },
@@ -150,7 +151,7 @@ const queryForm = reactive<CompanyQuery>({
   cityCode: undefined,
   companyCode: undefined,
   companyName: undefined,
-  cooperationModel: undefined,
+  companyCooperationModel: undefined,
   createUser: undefined,
   sort: ['id,desc'],
 })
@@ -163,13 +164,6 @@ const {
   handleDelete,
 } = useTable((page) => listCompany({ ...queryForm, ...page }), { immediate: false })
 
-// 合作模式选项配置（抽离为常量，便于统一维护）
-const cooperationOptions = [
-  { label: '供应商', value: 1 },
-  { label: '终端客户', value: 2 },
-  { label: '代理进销商', value: 4 },
-  { label: '渠道客户', value: 8 },
-]
 const statusOptions = [
   { label: '正常', value: 1 },
   { label: '暂停', value: 2 },
@@ -182,7 +176,7 @@ const reset = () => {
   queryForm.cityCode = undefined
   queryForm.companyCode = undefined
   queryForm.companyName = undefined
-  queryForm.cooperationModel = undefined
+  queryForm.companyCooperationModel = undefined
   queryForm.createUser = undefined
   search()
 }
