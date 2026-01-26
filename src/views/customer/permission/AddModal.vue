@@ -10,7 +10,7 @@
     <a-space direction="vertical" :size="16" style="display: block;">
       <a-row class="grid">
         <a-col :span="12">
-          <div class="permission-tabs" style="height: 80vh; overflow: auto;">
+          <div class="permission-tabs" style="height: 80vh;margin: 2px; overflow: auto;">
             <a-tabs
               v-model="activeTab"
               type="card"
@@ -53,8 +53,10 @@
         </a-col>
         <a-col :span="12">
           <GiTable
+            style="margin: 7px 2px;"
             :data="selectDataList"
             :columns="selectColumns"
+            :stripe="true"
             :disabled-tools="['refresh', 'size', 'fullscreen', 'setting']"
             :scroll="{ x: '100%', y: '100%' }"
           >

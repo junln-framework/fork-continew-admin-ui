@@ -18,7 +18,6 @@ import { useWindowSize } from '@vueuse/core'
 import { type PermissionUserDetailResp, getPermissionUser as getDetail } from '@/apis/system/permissionUser'
 import { useDict } from '@/hooks/app'
 
-
 const { width } = useWindowSize()
 
 const dataId = ref('')

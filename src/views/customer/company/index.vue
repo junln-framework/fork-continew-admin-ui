@@ -106,7 +106,9 @@ const columnTemplates: TableInstance['columns'] = [
   { title: '合作模式', dataIndex: 'companyCooperationModel', slotName: 'companyCooperationModel', width: 160, align: 'center' },
   { title: '状态', dataIndex: 'status', slotName: 'status', width: 80, align: 'center' },
   { title: '创建人', dataIndex: 'createUserString', slotName: 'createUser', width: 110, align: 'center' },
-  { title: '创建时间', dataIndex: 'createTime', slotName: 'createTime', width: 180 },
+  { title: '创建时间', dataIndex: 'createTime', slotName: 'createTime', width: 180, sortable: {
+    sortDirections: ['ascend', 'descend'],
+  } },
   {
     title: '操作',
     dataIndex: 'action',

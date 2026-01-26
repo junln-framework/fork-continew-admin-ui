@@ -43,8 +43,8 @@
       <template #cooperationModel="{ record }">
         <span>
           {{
-            cooperationOptions
-              .filter(option => (record.cooperationModel & option.value) !== 0)
+            company_cooperation_model
+              .filter(option => (record.companyCooperationModel & toInteger(option.value)) !== 0)
               .map(option => option.label)
               .join('、')
           }}
@@ -57,6 +57,7 @@
 <script setup lang="ts">
 import type { TableInstance } from '@arco-design/web-vue'
 import { reactive, ref, watch } from 'vue'
+import toInteger from 'xe-utils/toInteger'
 import { Message } from '@arco-design/web-vue'
 import { useTable } from '@/hooks'
 import { type CompanyQuery, type CompanyResp, listCompany } from '@/apis/customer/company'
@@ -69,14 +70,14 @@ const props = defineProps({
   },
 })
 const emit = defineEmits(['select-company-code'])
-const { company_type } = useDict('company_type')
+const { company_type, company_cooperation_model } = useDict('company_type', 'company_cooperation_model')
 const queryForm = reactive<CompanyQuery>({
   countryCode: undefined,
   provinceCode: undefined,
   cityCode: undefined,
   companyCode: undefined,
   companyName: undefined,
-  cooperationModel: undefined,
+  companyCooperationModel: undefined,
   createUser: undefined,
   sort: ['id,desc'],
 })
@@ -98,12 +99,6 @@ const {
   pagination,
   search,
 } = useTable((page) => listCompany({ ...queryForm, ...page }), { immediate: true })
-const cooperationOptions = [
-  { label: '供应商', value: 1 },
-  { label: '终端客户', value: 2 },
-  { label: '代理进销商', value: 4 },
-  { label: '渠道客户', value: 8 },
-]
 const selectedKeys = ref<string[]>([])
 const selectedData = ref<Map<string, CompanyResp>>(new Map())
 const emitSelectCompany = () => {
@@ -170,7 +165,7 @@ const columns: TableInstance['columns'] = [
     title: '区域',
     dataIndex: 'areaFullPathName',
     key: 'areaFullPathName',
-    align: 'center',
+    align: 'left',
     width: 220,
   },
   {
@@ -178,7 +173,7 @@ const columns: TableInstance['columns'] = [
     dataIndex: 'companyName',
     key: 'companyName',
   },
-  { title: '合作模式', dataIndex: 'cooperationModel', slotName: 'cooperationModel', width: 100, align: 'center' },
+  { title: '合作模式', dataIndex: 'cooperationModel', slotName: 'cooperationModel', width: 140, align: 'center' },
 ]
 // 重置
 const reset = () => {
@@ -187,7 +182,7 @@ const reset = () => {
   queryForm.cityCode = undefined
   queryForm.companyCode = undefined
   queryForm.companyName = undefined
-  queryForm.cooperationModel = undefined
+  queryForm.companyCooperationModel = undefined
   search()
 }
 // 全选

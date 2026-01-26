@@ -22,6 +22,9 @@
           <template #icon><icon-plus /></template>
           <template #default>新增</template>
         </a-button>
+        <a-button type="primary" icon="el-icon-user-add" @click="openAssignAssistantDialog">
+          分配助理
+        </a-button>
         <a-button v-permission="['system:user:import']" @click="onImport">
           <template #icon><icon-upload /></template>
           <template #default>导入</template>
@@ -86,11 +89,46 @@
     <DetailDrawer ref="DetailDrawerRef" />
     <PwdResetModal ref="PwdResetModalRef" />
     <RoleUpdateModal ref="RoleUpdateModalRef" @save-success="search" />
+    <!-- 分配助理弹窗 -->
+    <a-drawer v-model:visible="assignDialogVisible" title="分配助理" width="600px">
+      <a-form ref="assignFormRef" :model="assignForm" :rules="assignRules" label-width="100px">
+        <!-- 助理用户：可多选 -->
+        <a-form-item label="选择助理" prop="assistantUserId">
+          <a-select v-model="assignForm.assistantUserId" placeholder="请选择助理" filterable>
+            <a-option
+              v-for="user in userList" :key="user.id" :label="user.realName" :value="user.id"
+              :disabled="user.id === assignForm.assistedUserId"
+            />
+          </a-select>
+        </a-form-item>
+        <!-- 被协助人：如果是从列表行点击，默认选中该行用户 -->
+        <a-form-item label="被协助人" prop="assistedUserId">
+          <a-select v-model="assignForm.assistedUserId" placeholder="请选择被协助人">
+            <a-option v-for="user in userList" :key="user.id" :label="user.realName" :value="user.id" />
+          </a-select>
+        </a-form-item>
+        <!-- 过期时间：可选，默认永久 -->
+        <a-form-item label="过期时间">
+          <a-date-picker
+            v-model="assignForm.expireTime"
+            type="datetime"
+            placeholder="选择过期时间（为空则永久）"
+            format="YYYY-MM-DD HH:mm:ss"
+            value-format="YYYY-MM-DD HH:mm:ss"
+          />
+        </a-form-item>
+      </a-form>
+      <template #footer>
+        <a-button @click="assignDialogVisible = false">取消</a-button>
+        <a-button type="primary" @click="submitAssign">确认分配</a-button>
+      </template>
+    </a-drawer>
   </GiPageLayout>
 </template>
 
 <script setup lang="ts">
 import type { TableInstance } from '@arco-design/web-vue'
+import { Message, Modal } from '@arco-design/web-vue'
 import { onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import DeptTree from './dept/index.vue'
@@ -100,6 +138,7 @@ import DetailDrawer from './DetailDrawer.vue'
 import PwdResetModal from './PwdResetModal.vue'
 import RoleUpdateModal from './RoleUpdateModal.vue'
 import { type UserResp, deleteUser, exportUser, listUser } from '@/apis/system/user'
+import { assignAssistant, listAssistants, listAssistedUsers, unAssign } from '@/apis/system/user-assistant'
 import { DisEnableStatusList } from '@/constant/common'
 import { useDownload, useResetReactive, useTable } from '@/hooks'
 import { isMobile } from '@/utils'
@@ -110,6 +149,21 @@ defineOptions({ name: 'SystemUser' })
 
 const route = useRoute()
 const deptTreeRef = ref() // 部门树组件引用
+const userList = ref([]) // 用户列表
+const assignDialogVisible = ref(false) // 分配弹窗显隐
+const assignFormRef = ref(null) // 表单ref
+// 分配表单
+const assignForm = reactive({
+  assistedUserId: '', // 被协助人ID
+  assistantUserId: '', // 助理ID
+  expireTime: null, // 过期时间
+})
+
+// 表单校验规则
+const assignRules = reactive({
+  assistedUserId: [{ required: true, message: '请选择被协助人', trigger: 'change' }],
+  assistantUserId: [{ required: true, message: '请选择助理用户', trigger: 'change' }],
+})
 
 const [queryForm, resetForm] = useResetReactive({
   sort: ['t1.id,desc'],
@@ -263,6 +317,69 @@ const selectDeptTreeNode = (deptId: string) => {
     deptTreeRef.value.select?.([deptId])
   }
 }
+const openAssignAssistantDialog = (assistedUserId) => {
+  assignDialogVisible.value = true
+  // 如果是从列表行点击，默认填充被协助人
+  if (assistedUserId) {
+    assignForm.assistedUserId = assistedUserId
+  }
+  // 重置表单
+  // assignFormRef.value?.resetFields()
+}
+// 查询用户列表（含关联助理）
+const getUserList = async () => {
+  // 1. 查询所有用户
+  // const userRes = await listUsers();
+  // userList.value = userRes.data;
+  // 2. 为每个用户查询关联助理
+  // userList.value.forEach(async (user) => {
+  //   const assistantRes = await listAssistants(user.id);
+  //   user.assistants = assistantRes.data;
+  // });
+}
+// 提交分配
+const submitAssign = async () => {
+  try {
+    // await assignFormRef.value.validate()
+    // 调用后端接口
+    const res = await assignAssistant({
+      assistantUserId: assignForm.assistantUserId,
+      assistedUserIds: [assignForm.assistedUserId], // 单次分配一个被协助人，如需批量可改多选
+      expireTime: assignForm.expireTime,
+    })
+    if (res.code === 200) {
+      Message.success('分配助理成功！')
+      assignDialogVisible.value = false
+      // 刷新用户列表（重新查询关联助理）
+      getUserList()
+    }
+  } catch (error) {
+    Message.error(`分配失败：${error}`)
+  }
+}
+
+// 解除助理关联
+const handleUnAssign = async (assistantUserId, assistedUserId) => {
+  // try {
+  //   await MessageBox.confirm('确定要解除该助理关联吗？', '提示', {
+  //     confirmButtonText: '确定',
+  //     cancelButtonText: '取消',
+  //     type: 'warning',
+  //   })
+
+  // } catch (error) {
+  //   Message.error(`解除失败：${error.message}`)
+  // }
+  const res = await unAssign({
+    assistantUserId,
+    assistedUserId,
+  })
+  if (res.code === 200) {
+    Message.success('解除关联成功！')
+    getUserList() // 刷新列表
+  }
+}
+
 onMounted(() => {
   const deptIdFromRoute = route.query.deptId as string
   if (deptIdFromRoute) {

@@ -13,13 +13,13 @@
       @refresh="search"
     >
       <template #toolbar-left>
-	    <a-input-search v-model="queryForm.userId" placeholder="请输入用户ID" allow-clear @search="search" />
-	    <a-input-search v-model="queryForm.permissionType" placeholder="请输入AREA/COMPANY/CONTACTS" allow-clear @search="search" />
-	    <a-input-search v-model="queryForm.segment" placeholder="请输入分段编号" allow-clear @search="search" />
-	    <a-input-search v-model="queryForm.bitmapValue" placeholder="请输入64位位图值" allow-clear @search="search" />
-	    <a-input-search v-model="queryForm.bitCount" placeholder="请输入该段设置的位数" allow-clear @search="search" />
-	    <a-input-search v-model="queryForm.lastUpdateTime" placeholder="请输入最后更新时间" allow-clear @search="search" />
-	    <a-input-search v-model="queryForm.tenantId" placeholder="请输入租户ID" allow-clear @search="search" />
+        <a-input-search v-model="queryForm.userId" placeholder="请输入用户ID" allow-clear @search="search" />
+        <a-input-search v-model="queryForm.permissionType" placeholder="请输入AREA/COMPANY/CONTACTS" allow-clear @search="search" />
+        <a-input-search v-model="queryForm.segment" placeholder="请输入分段编号" allow-clear @search="search" />
+        <a-input-search v-model="queryForm.bitmapValue" placeholder="请输入64位位图值" allow-clear @search="search" />
+        <a-input-search v-model="queryForm.bitCount" placeholder="请输入该段设置的位数" allow-clear @search="search" />
+        <a-input-search v-model="queryForm.lastUpdateTime" placeholder="请输入最后更新时间" allow-clear @search="search" />
+        <a-input-search v-model="queryForm.tenantId" placeholder="请输入租户ID" allow-clear @search="search" />
         <a-button @click="reset">
           <template #icon><icon-refresh /></template>
           <template #default>重置</template>
@@ -61,14 +61,13 @@
 import type { TableInstance } from '@arco-design/web-vue'
 import AddModal from './AddModal.vue'
 import DetailDrawer from './DetailDrawer.vue'
-import { type PermissionUserResp, type PermissionUserQuery, deletePermissionUser, exportPermissionUser, listPermissionUser } from '@/apis/system/permissionUser'
+import { type PermissionUserQuery, type PermissionUserResp, deletePermissionUser, exportPermissionUser, listPermissionUser } from '@/apis/system/permissionUser'
 import { useDownload, useTable } from '@/hooks'
 import { useDict } from '@/hooks/app'
 import { isMobile } from '@/utils'
 import has from '@/utils/has'
 
 defineOptions({ name: 'PermissionUser' })
-
 
 const queryForm = reactive<PermissionUserQuery>({
   userId: undefined,
@@ -78,7 +77,8 @@ const queryForm = reactive<PermissionUserQuery>({
   bitCount: undefined,
   lastUpdateTime: undefined,
   tenantId: undefined,
-  sort: ['id,desc']
+  bitmapCooperationModel: undefined,
+  sort: ['id,desc'],
 })
 
 const {
@@ -86,7 +86,7 @@ const {
   loading,
   pagination,
   search,
-  handleDelete
+  handleDelete,
 } = useTable((page) => listPermissionUser({ ...queryForm, ...page }), { immediate: true })
 const columns: TableInstance['columns'] = [
   { title: '主键ID', dataIndex: 'id', slotName: 'id' },
@@ -104,8 +104,8 @@ const columns: TableInstance['columns'] = [
     width: 160,
     align: 'center',
     fixed: !isMobile() ? 'right' : undefined,
-    show: has.hasPermOr(['system:permissionUser:get', 'system:permissionUser:update', 'system:permissionUser:delete'])
-  }
+    show: has.hasPermOr(['system:permissionUser:get', 'system:permissionUser:update', 'system:permissionUser:delete']),
+  },
 ]
 
 // 重置
@@ -124,7 +124,7 @@ const reset = () => {
 const onDelete = (record: PermissionUserResp) => {
   return handleDelete(() => deletePermissionUser(record.id), {
     content: `是否确定删除该条数据？`,
-    showModal: true
+    showModal: true,
   })
 }
 

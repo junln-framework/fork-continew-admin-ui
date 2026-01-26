@@ -146,7 +146,7 @@ const attrs = useAttrs()
 const tableRef = useTemplateRef('tableRef')
 const columnSettingRef = ref<InstanceType<typeof ColumnSetting> | null>(null)
 const stripe = ref(false)
-const size = ref<TableInstance['size']>('large')
+const size = ref<TableInstance['size']>('small')
 const isBordered = ref(false)
 const isFullscreen = ref(false)
 
